@@ -18,6 +18,5 @@ export const getApiMessage = (
     displayable: false,
   },
 ) =>
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   reflector.get<IApiMessage>(API_MESSAGE_METADATA, context.getHandler()) ||
   defaultMessage

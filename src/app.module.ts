@@ -4,9 +4,10 @@ import { AppService } from './app.service'
 import { CustomConfigModule } from './global/config/config.module'
 import { DatabaseModule } from './global/database/database.module'
 import { ResponseInterceptor } from './common/interceptors/response.interceptor'
+import { UsersModule } from './core/users/users.module'
 
 @Module({
-  imports: [CustomConfigModule, DatabaseModule],
+  imports: [CustomConfigModule, DatabaseModule, UsersModule],
   controllers: [AppController],
   providers: [AppService, ResponseInterceptor],
 })

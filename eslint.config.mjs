@@ -39,7 +39,6 @@ export default tseslint.config(
       'object-shorthand': ['error', 'always'],
       'quotes': ['error', 'single'],
       "@typescript-eslint/await-thenable": "error",
-      "@typescript-eslint/no-unnecessary-condition": "error"
     },
   },
 );
