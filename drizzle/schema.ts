@@ -1,7 +1,6 @@
-import { integer, pgTable, varchar } from 'drizzle-orm/pg-core'
+import { user } from './schema/users/user'
+import { person } from './schema/users/person'
+import { userType } from './schema/users/user-type'
+import { userStatus } from './schema/users/usert-status'
 
-export const usersTable = pgTable('users', {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  userName: varchar('user_name', { length: 255 }).notNull().unique(),
-  password: varchar({ length: 255 }).notNull(),
-})
+export { user, person, userType, userStatus }

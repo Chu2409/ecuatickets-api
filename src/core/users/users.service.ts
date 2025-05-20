@@ -1,30 +1,29 @@
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common'
-import { CreateUserDto } from './dto/create-user.dto'
-import { UpdateUserDto } from './dto/update-user.dto'
+import { UpdateUserReqDto } from './dto/req/update-user.dto'
 import { DisplayableException } from 'src/common/exceptions/displayable.exception'
 import { hashPassword } from 'src/common/utils/encrypter'
-import { BaseParamsDto } from 'src/common/dtos/base-params.dto'
+import { BaseParamsReqDto } from 'src/common/dtos/req/base-params.dto'
 import { DatabaseService } from 'src/global/database/database.service'
-import { usersTable } from 'drizzle/schema'
+import { user } from 'drizzle/schema'
 import { count, desc, eq, sql } from 'drizzle-orm'
+import { CreateUserReqDto } from './dto/req/create-user.dto'
+import { USER_STATUS } from './types/user-status.enum'
 
 @Injectable()
 export class UsersService {
   constructor(private dbService: DatabaseService) {}
 
-  async findAll({ limit, page }: BaseParamsDto) {
+  async findAll({ limit, page }: BaseParamsReqDto) {
     const offset = (page - 1) * limit
 
     const query = this.dbService.db
       .select()
-      .from(usersTable)
-      .orderBy(desc(usersTable.id))
+      .from(user)
+      .orderBy(desc(user.id))
       .limit(limit)
       .offset(offset)
 
-    const totalQuery = this.dbService.db
-      .select({ count: count() })
-      .from(usersTable)
+    const totalQuery = this.dbService.db.select({ count: count() }).from(user)
 
     const [records, totalResult] = await Promise.all([
       query.execute(),
@@ -42,16 +41,13 @@ export class UsersService {
     }
   }
 
-  async create(dto: CreateUserDto) {
+  async create(dto: CreateUserReqDto) {
     // Check if person is already associated
     const [alreadyExistPersonAssociated] = await this.dbService.db
       .select()
-      .from(usersTable)
+      .from(user)
       .where(
-        eq(
-          sql<string>`lower(${usersTable.userName})`,
-          dto.userName.toLowerCase(),
-        ),
+        eq(sql<string>`lower(${user.userName})`, dto.userName.toLowerCase()),
       )
       .limit(1)
       .execute()
@@ -66,10 +62,13 @@ export class UsersService {
     const hashedPassword = hashPassword(dto.password)
 
     const [newUser] = await this.dbService.db
-      .insert(usersTable)
+      .insert(user)
       .values({
         userName: dto.userName,
-        password: hashedPassword,
+        passwordHash: hashedPassword,
+        userType: dto.userType,
+        status: dto.status,
+        personId: 1,
       })
       .returning()
       .execute()
@@ -77,18 +76,18 @@ export class UsersService {
     return newUser
   }
 
-  async update(id: number, dto: UpdateUserDto) {
+  async update(id: number, dto: UpdateUserReqDto) {
     await this.findOne(id) // Verify user exists
 
-    const updateData: Partial<UpdateUserDto> = { ...dto }
+    const updateData: Partial<UpdateUserReqDto> = { ...dto }
     if (dto.password) {
       updateData.password = hashPassword(dto.password)
     }
 
     const [updatedUser] = await this.dbService.db
-      .update(usersTable)
+      .update(user)
       .set(updateData)
-      .where(eq(usersTable.id, id))
+      .where(eq(user.id, id))
       .returning()
       .execute()
 
@@ -96,26 +95,26 @@ export class UsersService {
   }
 
   async findOne(id: number) {
-    const [user] = await this.dbService.db
+    const [userFound] = await this.dbService.db
       .select()
-      .from(usersTable)
-      .where(eq(usersTable.id, id))
+      .from(user)
+      .where(eq(user.id, id))
       .limit(1)
       .execute()
 
-    if (!user) {
+    if (!userFound) {
       throw new NotFoundException(`User with id ${id} not found`)
     }
 
-    return user
+    return userFound
   }
 
   async remove(id: number) {
     await this.findOne(id) // Verify user exists
 
     const [deletedUser] = await this.dbService.db
-      .delete(usersTable)
-      .where(eq(usersTable.id, id))
+      .delete(user)
+      .where(eq(user.id, id))
       .returning()
       .execute()
 
@@ -128,4 +127,15 @@ export class UsersService {
 
     return deletedUser
   }
+
+  async changeStatus(id: number, status: USER_STATUS) {
+    await this.findOne(id)
+
+    await this.dbService.db
+      .update(user)
+      .set({ status })
+      .where(eq(user.id, id))
+      .execute()
+  }
+
 }

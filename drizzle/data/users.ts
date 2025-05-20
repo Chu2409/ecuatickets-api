@@ -1,9 +1,24 @@
-import { usersTable } from 'drizzle/schema'
+import { person, user } from 'drizzle/schema'
 import { hashPassword } from 'src/common/utils/encrypter'
+import { USER_STATUS } from 'src/core/users/types/user-status.enum'
+import { USER_TYPE } from 'src/core/users/types/user-type.enum'
 
-export const usersSeed: (typeof usersTable.$inferInsert)[] = [
+export const peopleSeed: (typeof person.$inferInsert)[] = [
   {
-    userName: 'admin',
-    password: hashPassword('123456'),
+    dni: '0707047643',
+    firstName: 'Daniel',
+    lastName: 'Zhu',
+    email: 'dzhu2409@gmail.com',
+    birthDate: new Date('2003-09-24').toISOString(),
+  },
+]
+
+export const usersSeed: (typeof user.$inferInsert)[] = [
+  {
+    personId: 1,
+    userName: 'chu2409',
+    passwordHash: hashPassword('123456'),
+    userType: USER_TYPE.ADMINISTRATOR,
+    status: USER_STATUS.ACTIVE,
   },
 ]
