@@ -9,8 +9,9 @@ import {
   ValidateNested,
   IsOptional,
 } from 'class-validator'
-import { USER_STATUS } from '../../types/user-status.enum'
 import { USER_TYPE } from '../../types/user-type.enum'
+import { USER_STATUS } from '../../types/user-status.enum'
+import { UpdatePersonReqDto } from 'src/core/people/dto/req/update-person.dto'
 
 export class UpdateUserReqDto extends PartialType(
   OmitType(CreateUserReqDto, ['person']),
@@ -21,7 +22,7 @@ export class UpdateUserReqDto extends PartialType(
     description: 'The username of the user',
     example: 'johndoe',
   })
-  userName?: string
+  username?: string
 
   @IsString({ message: 'password must be a string' })
   @IsOptional()
@@ -38,7 +39,7 @@ export class UpdateUserReqDto extends PartialType(
     enum: USER_TYPE,
     example: USER_TYPE.ADMINISTRATOR,
   })
-  userType?: USER_TYPE
+  type?: USER_TYPE
 
   @IsEnum(USER_STATUS)
   @IsOptional()
@@ -51,11 +52,11 @@ export class UpdateUserReqDto extends PartialType(
 
   @IsObject()
   @ValidateNested()
-  @Type(() => UpdateUserReqDto)
+  @Type(() => UpdatePersonReqDto)
   @IsOptional()
   @ApiPropertyOptional({
     description: 'The person of the user',
-    type: UpdateUserReqDto,
+    type: UpdatePersonReqDto,
   })
-  person?: UpdateUserReqDto
+  person?: UpdatePersonReqDto
 }

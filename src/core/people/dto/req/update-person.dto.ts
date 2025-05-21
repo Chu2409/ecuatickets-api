@@ -18,15 +18,7 @@ export class UpdatePersonReqDto extends PartialType(CreatePersonReqDto) {
   })
   @IsString()
   @IsOptional()
-  firstName?: string
-
-  @ApiPropertyOptional({
-    description: 'Segundo nombre de la persona',
-    example: 'Pablo',
-  })
-  @IsString()
-  @IsOptional()
-  middleName?: string
+  name?: string
 
   @ApiPropertyOptional({
     description: 'Apellido de la persona',
@@ -34,15 +26,7 @@ export class UpdatePersonReqDto extends PartialType(CreatePersonReqDto) {
   })
   @IsString()
   @IsOptional()
-  lastName?: string
-
-  @ApiPropertyOptional({
-    description: 'Segundo apellido de la persona',
-    example: 'González',
-  })
-  @IsString()
-  @IsOptional()
-  secondLastName?: string
+  surname?: string
 
   @ApiPropertyOptional({
     description: 'Email de la persona',

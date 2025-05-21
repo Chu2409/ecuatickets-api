@@ -5,8 +5,6 @@ import { JwtPayload } from './types/jwt-payload.interface'
 import { DisplayableException } from 'src/common/exceptions/displayable.exception'
 import { comparePassword } from 'src/common/utils/encrypter'
 import { DatabaseService } from 'src/global/database/database.service'
-import { person, user } from 'drizzle/schema'
-import { eq } from 'drizzle-orm'
 
 @Injectable()
 export class AuthService {
@@ -15,34 +13,34 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async login({ email, password }: SignInReqDto) {
-    const [personFound] = await this.dbService.db
-      .select()
-      .from(person)
-      .where(eq(person.email, email))
-      .limit(1)
+  async login({ username, password }: SignInReqDto) {
+    const userFound = await this.dbService.user.findFirst({
+      where: {
+        username,
+      },
+      include: {
+        person: true,
+      },
+      omit: {
+        personId: true,
+      },
+    })
 
-    if (!personFound)
+    if (!userFound)
       throw new DisplayableException(
         'Usuario no encontrado',
         HttpStatus.NOT_FOUND,
       )
 
-    const [userFound] = await this.dbService.db
-      .select()
-      .from(user)
-      .where(eq(user.personId, personFound.id))
-      .limit(1)
-
-    this.verifyPassword(password, userFound.passwordHash)
+    this.verifyPassword(password, userFound.password)
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { passwordHash: pass, ...userWithoutPassword } = userFound
+    const { password: _, ...userWithoutPassword } = userFound
 
     return {
       token: this.createToken({
         id: userFound.id,
-        role: userFound.userType,
+        role: userFound.type,
       }),
       user: userWithoutPassword,
     }

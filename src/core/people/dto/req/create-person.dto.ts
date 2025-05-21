@@ -11,34 +11,18 @@ export class CreatePersonReqDto {
   dni: string
 
   @ApiProperty({
-    description: 'Person first name',
+    description: 'Person name',
     example: 'Juan',
   })
   @IsString()
-  firstName: string
-
-  @ApiPropertyOptional({
-    description: 'Person middle name',
-    example: 'Pablo',
-  })
-  @IsString()
-  @IsOptional()
-  middleName?: string
+  name: string
 
   @ApiProperty({
-    description: 'Person last name',
+    description: 'Person surname',
     example: 'Pérez',
   })
   @IsString()
-  lastName: string
-
-  @ApiPropertyOptional({
-    description: 'Person second last name',
-    example: 'González',
-  })
-  @IsString()
-  @IsOptional()
-  secondLastName?: string
+  surname: string
 
   @ApiProperty({
     description: 'Email of the person (must be unique)',

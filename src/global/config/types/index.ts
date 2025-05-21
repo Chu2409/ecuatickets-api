@@ -1,5 +1,5 @@
 export interface IConfig {
   PORT: number
-  DATABASE_URL: string
+  DB_URL: string
   JWT_SECRET: string
 }

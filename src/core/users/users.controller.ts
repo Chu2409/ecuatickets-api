@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   HttpStatus,
   Param,
@@ -15,9 +14,12 @@ import { CreateUserReqDto } from './dto/req/create-user.dto'
 import { UpdateUserReqDto } from './dto/req/update-user.dto'
 import { BaseParamsReqDto } from 'src/common/dtos/req/base-params.dto'
 import { ApiTags, ApiOperation } from '@nestjs/swagger'
-import { ApiStandardResponse, ApiPaginatedResponse } from 'src/common/decorators/api-standard-response.decorator'
 import { SimpleUserResDto } from './dto/res/simple-user.dto'
 import { ChangeUserStatusDto } from './dto/req/change-user-status.dto'
+import {
+  ApiPaginatedResponse,
+  ApiStandardResponse,
+} from 'src/common/decorators/api-standard-response.decorator'
 
 @ApiTags('Users')
 @Controller('users')

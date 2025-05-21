@@ -17,25 +17,13 @@ export class PersonResDto {
     description: 'Nombre de la persona',
     example: 'Juan',
   })
-  firstName: string
-
-  @ApiPropertyOptional({
-    description: 'Segundo nombre de la persona',
-    example: 'Pablo',
-  })
-  middleName: string | null
+  name: string
 
   @ApiProperty({
     description: 'Apellido de la persona',
     example: 'Pérez',
   })
-  lastName: string
-
-  @ApiPropertyOptional({
-    description: 'Segundo apellido de la persona',
-    example: 'González',
-  })
-  secondLastName: string | null
+  surname: string
 
   @ApiProperty({
     description: 'Email de la persona',
@@ -54,10 +42,4 @@ export class PersonResDto {
     example: '0987654321',
   })
   phone: string | null
-
-  @ApiProperty({
-    description: 'Fecha de creación de la persona',
-    example: '2023-01-01T00:00:00.000Z',
-  })
-  createdAt: Date
 }

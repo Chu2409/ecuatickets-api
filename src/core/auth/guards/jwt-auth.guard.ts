@@ -9,7 +9,7 @@ import {
 import { Observable } from 'rxjs'
 import { Reflector } from '@nestjs/core'
 import { META_ROLES } from '../decorators/role-protected.decorator'
-import { user } from 'drizzle/schema'
+import { User } from '@prisma/client'
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -27,7 +27,7 @@ export class JwtAuthGuard implements CanActivate {
     if (validRoles.length === 0) return true
 
     const req = context.switchToHttp().getRequest()
-    const userReq: typeof user.$inferSelect | null = req.user
+    const userReq: User | null = req.user
 
     if (!userReq) throw new BadRequestException('User not found')
 
@@ -37,10 +37,10 @@ export class JwtAuthGuard implements CanActivate {
     //   }
     // }
 
-    if (validRoles.includes(userReq.userType as string)) return true
+    if (validRoles.includes(userReq.type as string)) return true
 
     throw new ForbiddenException(
-      `User ${userReq.userName} need a valid role: [${validRoles.join(', ')}]`,
+      `User ${userReq.username} need a valid role: [${validRoles.join(', ')}]`,
     )
   }
 
