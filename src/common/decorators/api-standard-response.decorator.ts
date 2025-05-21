@@ -3,13 +3,17 @@ import { ApiExtraModels, ApiResponse, getSchemaPath } from '@nestjs/swagger'
 import { ApiPaginatedRes, ApiRes } from '../dtos/res/api-response.dto'
 
 export function ApiStandardResponse<T>(
-  model?: Type<T> | string,
+  model?: Type<T> | Type<T>[] | string,
   status: HttpStatus = HttpStatus.OK,
 ) {
+  // Verificamos si model es un array de tipos
+  const isArrayType = Array.isArray(model)
+  const actualModel = isArrayType ? model[0] : model
+
   return applyDecorators(
     ApiExtraModels(
       model ? ApiRes : ApiRes<T>,
-      ...(typeof model === 'function' ? [model] : []),
+      ...(typeof actualModel === 'function' ? [actualModel] : []),
     ),
     ApiResponse({
       status,
@@ -21,7 +25,13 @@ export function ApiStandardResponse<T>(
             ? [
                 {
                   properties: {
-                    data: { $ref: getSchemaPath(model) },
+                    data: isArrayType
+                      ? {
+                          type: 'array',
+                          // @ts-expect-error default
+                          items: { $ref: getSchemaPath(actualModel) },
+                        } // @ts-expect-error default
+                      : { $ref: getSchemaPath(actualModel) },
                   },
                 },
               ]
@@ -66,7 +76,6 @@ export function ApiPaginatedResponse<T>(
     }),
   )
 }
-
 // Función auxiliar para descripciones de estado
 function getStatusDescription(status: HttpStatus): string {
   const descriptions = {
@@ -74,7 +83,11 @@ function getStatusDescription(status: HttpStatus): string {
     [HttpStatus.CREATED]: 'Resource created successfully',
     [HttpStatus.ACCEPTED]: 'Request accepted for processing',
     [HttpStatus.NO_CONTENT]: 'Request successful but no content to return',
-    // Agrega más según necesites
+    [HttpStatus.BAD_REQUEST]: 'Bad request, invalid input',
+    [HttpStatus.UNAUTHORIZED]: 'Authentication required',
+    [HttpStatus.FORBIDDEN]: 'Access forbidden',
+    [HttpStatus.NOT_FOUND]: 'Resource not found',
+    [HttpStatus.INTERNAL_SERVER_ERROR]: 'Internal server error',
   }
   return descriptions[status] || `Status code ${status}`
 }

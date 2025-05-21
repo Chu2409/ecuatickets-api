@@ -4,38 +4,29 @@ import { JwtService } from '@nestjs/jwt'
 import { JwtPayload } from './types/jwt-payload.interface'
 import { DisplayableException } from 'src/common/exceptions/displayable.exception'
 import { comparePassword } from 'src/common/utils/encrypter'
-import { DatabaseService } from 'src/global/database/database.service'
+import { UsersService } from '../users/users.service'
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly dbService: DatabaseService,
+    private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
   ) {}
 
   async login({ username, password }: SignInReqDto) {
-    const userFound = await this.dbService.user.findFirst({
-      where: {
-        username,
-      },
-      include: {
-        person: true,
-      },
-      omit: {
-        personId: true,
-      },
-    })
+    const userFound =
+      await this.usersService.findOneWithPasswordByUsername(username)
 
     if (!userFound)
       throw new DisplayableException(
-        'Usuario no encontrado',
+        'Credenciales incorrectas',
         HttpStatus.NOT_FOUND,
       )
 
     this.verifyPassword(password, userFound.password)
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...userWithoutPassword } = userFound
+    const { password: _, personId: __, ...userWithoutPassword } = userFound
 
     return {
       token: this.createToken({

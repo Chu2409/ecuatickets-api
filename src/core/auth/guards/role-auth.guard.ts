@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ForbiddenException,
   Injectable,
   UnauthorizedException,
@@ -9,10 +8,10 @@ import {
 import { Observable } from 'rxjs'
 import { Reflector } from '@nestjs/core'
 import { META_ROLES } from '../decorators/role-protected.decorator'
-import { User } from '@prisma/client'
+import { UserPersonResDto } from 'src/core/users/dto/res/user.dto'
 
 @Injectable()
-export class JwtAuthGuard implements CanActivate {
+export class RoleAuthGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(
@@ -27,15 +26,7 @@ export class JwtAuthGuard implements CanActivate {
     if (validRoles.length === 0) return true
 
     const req = context.switchToHttp().getRequest()
-    const userReq: User | null = req.user
-
-    if (!userReq) throw new BadRequestException('User not found')
-
-    // for (const role of userReq.userType) {
-    //   if (validRoles.includes(role as string)) {
-    //     return true
-    //   }
-    // }
+    const userReq: UserPersonResDto = req.user
 
     if (validRoles.includes(userReq.type as string)) return true
 

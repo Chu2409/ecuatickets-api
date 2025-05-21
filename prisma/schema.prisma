@@ -44,7 +44,7 @@ model User {
   status   UserStatus @default(ACTIVE) @map("status")
 
   personId Int    @unique @map("person_id")
-  person   Person @relation(fields: [personId], references: [id])
+  person   Person @relation(fields: [personId], references: [id], onDelete: Cascade)
 
   @@map("users")
 }

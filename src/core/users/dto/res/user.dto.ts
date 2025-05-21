@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { PersonResDto } from 'src/core/people/dto/res/person.dto'
 import { USER_TYPE } from '../../types/user-type.enum'
 import { USER_STATUS } from '../../types/user-status.enum'
+import { PersonResDto } from 'src/core/people/dto/res/person.dto'
 
-export class UserPersonResDto {
+export class BaseUserResDto {
   @ApiProperty({
     description: 'id del usuario',
     example: 1,
@@ -27,7 +27,17 @@ export class UserPersonResDto {
     example: USER_STATUS.ACTIVE,
   })
   status: USER_STATUS
+}
 
+export class UserResDto extends BaseUserResDto {
+  @ApiProperty({
+    description: 'id de la persona',
+    example: 1,
+  })
+  personId: number
+}
+
+export class UserPersonResDto extends BaseUserResDto {
   @ApiProperty({
     description: 'persona asociada al usuario',
     type: PersonResDto,

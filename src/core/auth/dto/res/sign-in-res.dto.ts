@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { UserPersonResDto } from 'src/core/users/dto/res/user-person.dto'
+import { UserPersonResDto } from 'src/core/users/dto/res/user.dto'
 
 export class SignInResDto {
   @ApiProperty({

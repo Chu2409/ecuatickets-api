@@ -45,11 +45,11 @@ export class ApiRes<T> {
 export class ApiPaginatedRes<T> {
   @ApiProperty({
     description: 'Array of records',
-    // Type se definirá dinámicamente
-    type: 'array',
-    example: [],
+    isArray: true,
+    // Swagger inferirá el tipo desde el decorador
   })
   records: T[]
+
   @ApiProperty({
     type: Number,
     description: 'Total number of records',
