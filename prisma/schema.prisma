@@ -91,6 +91,7 @@ model City {
   destinationTickets     Ticket[]           @relation("TicketDestination")
   intermediateStops      IntermediateStop[]
 
+  @@unique([name, province])
   @@map("cities")
 }
 

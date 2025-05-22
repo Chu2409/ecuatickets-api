@@ -5,6 +5,7 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 import { UsersModule } from './core/users/users.module'
 import { AuthModule } from './core/auth/auth.module'
 import { CompaniesModule } from './core/companies/companies.module'
+import { CitiesModule } from './core/cities/cities.module'
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { CompaniesModule } from './core/companies/companies.module'
     UsersModule,
     AuthModule,
     CompaniesModule,
+    CitiesModule,
   ],
   providers: [ResponseInterceptor],
 })
