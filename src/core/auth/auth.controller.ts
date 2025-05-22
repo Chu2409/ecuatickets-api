@@ -12,9 +12,9 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { ApiStandardResponse } from 'src/common/decorators/api-standard-response.decorator'
 import { SignInResDto } from './dto/res/sign-in-res.dto'
 import { Auth } from './decorators/auth.decorator'
-import { USER_TYPE } from '../users/types/user-type.enum'
 import { GetUser } from './decorators/get-user.decorator'
 import { User } from '@prisma/client'
+import { USER_ROLE } from '../users/types/user-role.enum'
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -36,7 +36,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Get Me',
   })
-  @Auth(USER_TYPE.ADMINISTRATOR)
+  @Auth(USER_ROLE.COMPANY)
   getMe(@GetUser() user: User) {
     return user
   }

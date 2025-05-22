@@ -2,10 +2,9 @@ import { Injectable } from '@nestjs/common'
 import { DatabaseService } from 'src/global/database/database.service'
 import { UserFiltersReqDto } from './dto/req/user-filters.dto'
 import { Prisma } from '@prisma/client'
-import { UserPersonResDto } from './dto/res/user.dto'
 import { CreateUserReqDto } from './dto/req/create-user.dto'
 import { UpdateUserReqDto } from './dto/req/update-user.dto'
-import { USER_STATUS } from './types/user-status.enum'
+import { BaseUserResDto } from './dto/res/user.dto'
 
 @Injectable()
 export class UsersRepository {
@@ -13,7 +12,7 @@ export class UsersRepository {
 
   async findMany(
     filters: UserFiltersReqDto,
-  ): Promise<[UserPersonResDto[], number]> {
+  ): Promise<[BaseUserResDto[], number]> {
     const { limit, page, search } = filters
 
     const whereClause: Prisma.UserWhereInput = {}
@@ -27,21 +26,27 @@ export class UsersRepository {
           },
         },
         {
-          person: {
-            OR: [
-              {
-                name: {
-                  contains: search,
-                  mode: 'insensitive',
-                },
-              },
-              {
-                email: {
-                  contains: search,
-                  mode: 'insensitive',
-                },
-              },
-            ],
+          name: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        {
+          surname: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        {
+          email: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        {
+          dni: {
+            contains: search,
+            mode: 'insensitive',
           },
         },
       ]
@@ -55,8 +60,8 @@ export class UsersRepository {
         orderBy: {
           id: 'desc',
         },
-        include: {
-          person: true,
+        omit: {
+          companyId: true,
         },
       }),
       this.dbService.user.count({
@@ -70,17 +75,17 @@ export class UsersRepository {
   async findById(id: number) {
     return this.dbService.user.findUnique({
       where: { id },
-      include: {
-        person: true,
+      omit: {
+        companyId: true,
       },
     })
   }
 
   async verifyIfExists({
     email,
-    excludeUserId,
     username,
     dni,
+    excludeUserId,
   }: {
     username?: string
     email?: string
@@ -99,11 +104,11 @@ export class UsersRepository {
     }
 
     if (email) {
-      conditions.OR?.push({ person: { email } })
+      conditions.OR?.push({ email })
     }
 
     if (dni) {
-      conditions.OR?.push({ person: { dni } })
+      conditions.OR?.push({ dni })
     }
 
     if (excludeUserId) {
@@ -112,25 +117,20 @@ export class UsersRepository {
 
     return this.dbService.user.findFirst({
       where: conditions,
-      include: {
-        person: true,
+      omit: {
+        companyId: true,
       },
     })
   }
 
-  async createWithPerson(userData: CreateUserReqDto) {
-    return this.dbService.$transaction(async (prisma) => {
-      return prisma.user.create({
-        data: {
-          ...userData,
-          person: {
-            create: userData.person,
-          },
-        },
-        include: {
-          person: true,
-        },
-      })
+  async create(userData: CreateUserReqDto) {
+    return this.dbService.user.create({
+      data: {
+        ...userData,
+      },
+      omit: {
+        companyId: true,
+      },
     })
   }
 
@@ -139,15 +139,9 @@ export class UsersRepository {
       where: { id },
       data: {
         ...data,
-        password: data.password ? data.password : undefined,
-        person: {
-          update: {
-            ...data.person,
-          },
-        },
       },
-      include: {
-        person: true,
+      omit: {
+        companyId: true,
       },
     })
   }
@@ -156,17 +150,19 @@ export class UsersRepository {
     return this.dbService.user.delete({
       where: { id },
       include: {
-        person: true,
+        company: true,
       },
     })
   }
 
-  async changeStatus(id: number, status: USER_STATUS) {
+  async changeStatus(id: number, isActive: boolean) {
     return this.dbService.user.update({
       where: { id },
-      data: { status },
-      include: {
-        person: true,
+      data: {
+        isActive,
+      },
+      omit: {
+        companyId: true,
       },
     })
   }

@@ -1,16 +1,42 @@
 import { Logger } from '@nestjs/common'
 import { PrismaClient } from '@prisma/client'
-import { people, users } from './data/user'
+import { users } from './data/user'
+import { companies } from './data/companies'
+import { cities } from './data/cities'
+import { buses } from './data/buses'
+import { seatTypes } from './data/seatTypes'
+import { seatConfigurations } from './data/seatConfigurations'
+import { physicalSeats } from './data/physicalSeats'
 
 const prisma = new PrismaClient()
 
 const main = async () => {
-  await prisma.person.createMany({
-    data: people,
+  await prisma.company.createMany({
+    data: companies,
   })
 
   await prisma.user.createMany({
     data: users,
+  })
+
+  await prisma.city.createMany({
+    data: cities,
+  })
+
+  await prisma.bus.createMany({
+    data: buses,
+  })
+
+  await prisma.seatType.createMany({
+    data: seatTypes,
+  })
+
+  await prisma.seatConfiguration.createMany({
+    data: seatConfigurations,
+  })
+
+  await prisma.physicalSeat.createMany({
+    data: physicalSeats,
   })
 
   Logger.log('Seed data created successfully')

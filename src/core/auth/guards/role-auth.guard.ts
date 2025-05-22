@@ -8,7 +8,7 @@ import {
 import { Observable } from 'rxjs'
 import { Reflector } from '@nestjs/core'
 import { META_ROLES } from '../decorators/role-protected.decorator'
-import { UserPersonResDto } from 'src/core/users/dto/res/user.dto'
+import { BaseUserResDto } from 'src/core/users/dto/res/user.dto'
 
 @Injectable()
 export class RoleAuthGuard implements CanActivate {
@@ -26,9 +26,9 @@ export class RoleAuthGuard implements CanActivate {
     if (validRoles.length === 0) return true
 
     const req = context.switchToHttp().getRequest()
-    const userReq: UserPersonResDto = req.user
+    const userReq: BaseUserResDto = req.user
 
-    if (validRoles.includes(userReq.type as string)) return true
+    if (validRoles.includes(userReq.role as string)) return true
 
     throw new ForbiddenException(
       `User ${userReq.username} need a valid role: [${validRoles.join(', ')}]`,

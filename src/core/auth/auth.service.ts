@@ -25,15 +25,12 @@ export class AuthService {
 
     this.verifyPassword(password, userFound.password)
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, personId: __, ...userWithoutPassword } = userFound
-
     return {
       token: this.createToken({
         id: userFound.id,
-        role: userFound.type,
+        role: userFound.role,
       }),
-      user: userWithoutPassword,
+      user: userFound,
     }
   }
 

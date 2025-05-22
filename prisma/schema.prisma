@@ -7,44 +7,250 @@ datasource db {
   url      = env("DB_URL")
 }
 
-enum UserType {
-  ADMINISTRATOR
-  MANAGER
-
-  @@map("USER_TYPE")
+enum PassengerType {
+  NORMAL
+  DISABLED
+  SENIOR
+  MINOR
 }
 
-enum UserStatus {
-  ACTIVE
-  INACTIVE
-  SUSPENDED
-
-  @@map("USER_STATUS")
+enum PaymentMethod {
+  TRANSFER
+  PAYPAL
 }
 
-model Person {
-  id        Int       @id @default(autoincrement()) @map("id")
-  dni       String    @unique @map("dni")
-  name      String    @map("name")
-  surname   String    @map("surname")
-  email     String    @unique @map("email")
-  birthDate DateTime? @map("birth_date") @db.Date
-  phone     String?   @map("phone")
+enum RouteStatus {
+  GENERATED
+  IN_PROGRESS
+  COMPLETED
+}
 
-  user User?
+enum RouteMode {
+  AUTOMATIC
+  MANUAL
+}
 
-  @@map("people")
+enum NotificationType {
+  EMAIL
+  PUSH
+}
+
+enum UserRole {
+  COMPANY
+  CLERK
+  CUSTOMER
+  DRIVER
 }
 
 model User {
-  id       Int        @id @default(autoincrement()) @map("id")
-  username String     @unique @map("username")
-  password String     @map("password")
-  type     UserType   @map("type")
-  status   UserStatus @default(ACTIVE) @map("status")
+  id        Int      @id @default(autoincrement()) @map("id")
+  name      String   @map("name")
+  surname   String   @map("surname")
+  dni       String   @unique @map("dni")
+  email     String   @unique @map("email")
+  username  String   @unique @map("username")
+  password  String   @map("password")
+  role      UserRole @map("role")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  personId Int    @unique @map("person_id")
-  person   Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  companyId Int?     @map("company_id")
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  notifications Notification[]
+  ticketScans   TicketScan[]
 
   @@map("users")
+}
+
+model Company {
+  id             Int      @id @default(autoincrement()) @map("id")
+  name           String   @map("name")
+  logoUrl        String?  @map("logo_url")
+  themeColors    Json?    @map("theme_colors")
+  socialLinks    Json?    @map("social_links")
+  supportContact String?  @map("support_contact")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  users       User[]
+  buses       Bus[]
+  frequencies Frequency[]
+
+  @@map("companies")
+}
+
+model City {
+  id       Int    @id @default(autoincrement()) @map("id")
+  name     String @map("name")
+  province String @map("province")
+
+  originFrecuencies      Frequency[]        @relation("FrequencyOrigin")
+  destinationFrecuencies Frequency[]        @relation("FrequencyDestination")
+  originTickets          Ticket[]           @relation("TicketOrigin")
+  destinationTickets     Ticket[]           @relation("TicketDestination")
+  intermediateStops      IntermediateStop[]
+
+  @@map("cities")
+}
+
+model Frequency {
+  id         Int      @id @default(autoincrement()) @map("id")
+  time       String   @map("time")
+  resolution String   @map("previous_resolution")
+  active     Boolean  @default(true) @map("active")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  companyId     Int     @map("company_id")
+  company       Company @relation(fields: [companyId], references: [id])
+  originId      Int     @map("origin_city_id")
+  origin        City    @relation("FrequencyOrigin", fields: [originId], references: [id])
+  destinationId Int     @map("destination_city_id")
+  destination   City    @relation("FrequencyDestination", fields: [destinationId], references: [id])
+
+  stops       IntermediateStop[]
+  routeSheets RouteSheet[]
+
+  @@map("frequencies")
+}
+
+model IntermediateStop {
+  id    Int @id @default(autoincrement()) @map("id")
+  order Int @map("order")
+
+  frequencyId Int       @map("frequency_id")
+  frequency   Frequency @relation(fields: [frequencyId], references: [id])
+  cityId      Int       @map("city_id")
+  city        City      @relation(fields: [cityId], references: [id])
+
+  @@map("intermediate_stops")
+}
+
+model Bus {
+  id             Int     @id @default(autoincrement()) @map("id")
+  internalNumber String  @map("internal_number")
+  licensePlate   String  @unique @map("license_plate")
+  chassisBrand   String  @map("chassis_brand")
+  bodyBrand      String  @map("body_brand")
+  photoUrl       String? @map("photo_url")
+  isActive       Boolean @default(true) @map("is_active")
+
+  companyId Int     @map("company_id")
+  company   Company @relation(fields: [companyId], references: [id])
+
+  seatConfigurations SeatConfiguration[]
+  physicalSeats      PhysicalSeat[]
+  routeSheets        RouteSheet[]
+
+  @@map("buses")
+}
+
+model SeatType {
+  id           Int     @id @default(autoincrement()) @map("id")
+  name         String  @unique @map("name")
+  description  String? @map("description")
+  valueToApply Float   @map("value_to_apply")
+
+  seatConfigurations SeatConfiguration[]
+  physicalSeats      PhysicalSeat[]
+
+  @@map("seat_types")
+}
+
+model SeatConfiguration {
+  id       Int @id @default(autoincrement()) @map("id")
+  quantity Int @map("quantity")
+
+  busId      Int      @map("bus_id")
+  bus        Bus      @relation(fields: [busId], references: [id])
+  seatTypeId Int      @map("seat_type_id")
+  seatType   SeatType @relation(fields: [seatTypeId], references: [id])
+
+  @@map("seat_configurations")
+}
+
+model PhysicalSeat {
+  id         Int    @id @default(autoincrement()) @map("id")
+  seatNumber String @map("seat_number")
+  row        Int?   @map("row")
+  column     Int?   @map("column")
+  floor      Int?   @map("floor")
+
+  busId      Int      @map("bus_id")
+  bus        Bus      @relation(fields: [busId], references: [id])
+  seatTypeId Int      @map("seat_type_id")
+  seatType   SeatType @relation(fields: [seatTypeId], references: [id])
+
+  tickets Ticket[]
+
+  @@map("physical_seats")
+}
+
+model RouteSheet {
+  id     Int         @id @default(autoincrement()) @map("id")
+  date   DateTime    @map("date")
+  status RouteStatus @map("status")
+  mode   RouteMode   @map("mode")
+
+  frequencyId Int       @map("frequency_id")
+  frequency   Frequency @relation(fields: [frequencyId], references: [id])
+  busId       Int       @map("bus_id")
+  bus         Bus       @relation(fields: [busId], references: [id])
+  tickets     Ticket[]
+
+  @@map("route_sheets")
+}
+
+model Ticket {
+  id            Int           @id @default(autoincrement()) @map("id")
+  passengerId   String        @map("passenger_id")
+  passengerName String        @map("passenger_name")
+  passengerType PassengerType @map("passenger_type")
+  price         Float         @map("price")
+  discount      Float         @map("discount")
+  accessCode    String        @unique @map("access_code")
+  status        String        @map("status")
+  paymentMethod PaymentMethod @map("payment_method")
+  receiptUrl    String?       @map("receipt_url")
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  routeSheetId   Int          @map("route_sheet_id")
+  routeSheet     RouteSheet   @relation(fields: [routeSheetId], references: [id])
+  physicalSeatId Int          @map("physical_seat_id")
+  physicalSeat   PhysicalSeat @relation(fields: [physicalSeatId], references: [id])
+  originId       Int          @map("origin_city_id")
+  origin         City         @relation("TicketOrigin", fields: [originId], references: [id])
+  destinationId  Int          @map("destination_city_id")
+  destination    City         @relation("TicketDestination", fields: [destinationId], references: [id])
+
+  scans TicketScan[]
+
+  @@map("tickets")
+}
+
+model TicketScan {
+  id        Int      @id @default(autoincrement()) @map("id")
+  ticketId  Int      @map("ticket_id")
+  userId    Int      @map("user_id")
+  scannedAt DateTime @default(now()) @map("scanned_at")
+
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("ticket_scans")
+}
+
+model Notification {
+  id        Int              @id @default(autoincrement()) @map("id")
+  userId    Int              @map("user_id")
+  message   String           @map("message")
+  read      Boolean          @default(false) @map("read")
+  type      NotificationType @map("type")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
 }

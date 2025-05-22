@@ -1,17 +1,51 @@
 import {
+  IsBoolean,
+  IsEmail,
   IsEnum,
   IsNotEmpty,
-  IsObject,
+  IsNumber,
   IsOptional,
+  IsPositive,
   IsString,
-  ValidateNested,
+  Length,
 } from 'class-validator'
-import { CreatePersonReqDto } from 'src/core/people/dto/req/create-person.dto'
-import { Type } from 'class-transformer'
-import { ApiProperty } from '@nestjs/swagger'
-import { USER_TYPE } from '../../types/user-type.enum'
-import { USER_STATUS } from '../../types/user-status.enum'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { USER_ROLE } from '../../types/user-role.enum'
 export class CreateUserReqDto {
+  @IsString({ message: 'name must be a string' })
+  @IsNotEmpty({ message: 'name is required' })
+  @ApiProperty({
+    description: 'The name of the user',
+    example: 'John',
+  })
+  name: string
+
+  @IsString({ message: 'surname must be a string' })
+  @IsNotEmpty({ message: 'surname is required' })
+  @ApiProperty({
+    description: 'The surname of the user',
+    example: 'Doe',
+  })
+  surname: string
+
+  @IsString({ message: 'dni must be a string' })
+  @Length(10, 10, {
+    message: 'dni must be 10 characters long',
+  })
+  @ApiProperty({
+    description: 'The dni of the user',
+    example: '0707047643',
+  })
+  dni: string
+
+  @IsEmail({}, { message: 'email must be a valid email' })
+  @IsNotEmpty({ message: 'email is required' })
+  @ApiProperty({
+    description: 'The email of the user',
+    example: 'juanito21@gmail.com',
+  })
+  email: string
+
   @IsString({ message: 'username must be a string' })
   @IsNotEmpty({ message: 'username is required' })
   @ApiProperty({
@@ -28,30 +62,29 @@ export class CreateUserReqDto {
   })
   password: string
 
-  @IsEnum(USER_TYPE)
+  @IsEnum(USER_ROLE)
   @IsNotEmpty({ message: 'type is required' })
   @ApiProperty({
     description: 'The type of the user',
-    enum: USER_TYPE,
-    example: USER_TYPE.ADMINISTRATOR,
+    enum: USER_ROLE,
+    example: USER_ROLE.COMPANY,
   })
-  type: USER_TYPE
+  role: USER_ROLE
 
-  @IsEnum(USER_STATUS)
+  @IsBoolean({ message: 'isActive must be a boolean' })
   @IsOptional()
-  @ApiProperty({
-    description: 'The status of the user',
-    enum: USER_STATUS,
-    example: USER_STATUS.ACTIVE,
+  @ApiPropertyOptional({
+    description: 'The isActive of the user',
+    example: true,
   })
-  status?: USER_STATUS
+  isActive?: boolean
 
-  @IsObject()
-  @ValidateNested()
-  @Type(() => CreatePersonReqDto)
-  @ApiProperty({
-    description: 'The person of the user',
-    type: CreatePersonReqDto,
+  @IsNumber({}, { message: 'companyId must be a number' })
+  @IsPositive({ message: 'companyId must be a positive number' })
+  @IsOptional()
+  @ApiPropertyOptional({
+    description: 'The companyId of the user',
+    example: 1,
   })
-  person: CreatePersonReqDto
+  companyId?: number
 }

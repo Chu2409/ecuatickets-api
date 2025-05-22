@@ -5,8 +5,6 @@ import { hashPassword } from 'src/common/utils/encrypter'
 import { CreateUserReqDto } from './dto/req/create-user.dto'
 import { UserFiltersReqDto } from './dto/req/user-filters.dto'
 import { UsersRepository } from './users.repository'
-import { ChangeUserStatusDto } from './dto/req/change-user-status.dto'
-import { UserPersonResDto } from './dto/res/user.dto'
 
 @Injectable()
 export class UsersService {
@@ -16,7 +14,7 @@ export class UsersService {
     const [entities, total] = await this.usersRepository.findMany(filters)
 
     return {
-      records: entities.map((user) => this.mapToResponseDto(user)),
+      records: entities,
       total,
       limit: filters.limit,
       page: filters.page,
@@ -27,13 +25,13 @@ export class UsersService {
   async create(dto: CreateUserReqDto) {
     await this.validateUserUniqueness({
       username: dto.username,
-      email: dto.person?.email,
-      dni: dto.person?.dni,
+      email: dto.email,
+      dni: dto.dni,
     })
 
     dto.password = hashPassword(dto.password)
 
-    const entity = await this.usersRepository.createWithPerson(dto)
+    const entity = await this.usersRepository.create(dto)
 
     return !!entity
   }
@@ -41,12 +39,12 @@ export class UsersService {
   async update(id: number, dto: UpdateUserReqDto) {
     await this.findOne(id) // Verify user exists
 
-    if (dto.username || dto.person?.email) {
+    if (dto.username || dto.email) {
       await this.validateUserUniqueness({
         username: dto.username,
-        email: dto.person?.email,
+        email: dto.email,
         excludeUserId: id,
-        dni: dto.person?.dni,
+        dni: dto.dni,
       })
     }
 
@@ -66,7 +64,7 @@ export class UsersService {
       throw new NotFoundException(`User with id ${id} not found`)
     }
 
-    return this.mapToResponseDto(userFound)
+    return userFound
   }
 
   async findOneWithPasswordByUsername(username: string) {
@@ -81,14 +79,6 @@ export class UsersService {
     const deletedUser = await this.usersRepository.remove(id)
 
     return !!deletedUser
-  }
-
-  async changeStatus(id: number, dto: ChangeUserStatusDto) {
-    await this.findOne(id)
-
-    const user = await this.usersRepository.changeStatus(id, dto.status)
-
-    return !!user
   }
 
   private async validateUserUniqueness({
@@ -117,12 +107,12 @@ export class UsersService {
           'El nombre de usuario ya está en uso',
           HttpStatus.CONFLICT,
         )
-      } else if (existingUser.person?.email === email) {
+      } else if (existingUser.email === email) {
         throw new DisplayableException(
           'El correo electrónico ya está en uso',
           HttpStatus.CONFLICT,
         )
-      } else if (existingUser.person?.dni === dni) {
+      } else if (existingUser.dni === dni) {
         throw new DisplayableException(
           'El DNI ya está en uso',
           HttpStatus.CONFLICT,
@@ -131,10 +121,11 @@ export class UsersService {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private mapToResponseDto(user: any): UserPersonResDto {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, personId, ...userData } = user
-    return userData as UserPersonResDto
+  async changeStatus(id: number) {
+    const user = await this.findOne(id)
+
+    const changed = await this.usersRepository.changeStatus(id, !user.isActive)
+
+    return !!changed
   }
 }
