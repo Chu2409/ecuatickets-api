@@ -1,15 +1,15 @@
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common'
-import { CreateCityReqDto } from './dto/req/create-city.dto'
-import { UpdateCityReqDto } from './dto/req/update-city.dto'
-import { CitiesRepository } from './cities.repository'
-import { CityFiltersReqDto } from './dto/req/city-filters.dto'
+import { CreateBusReqDto } from './dto/req/create-bus.dto'
+import { UpdateBusReqDto } from './dto/req/update-bus.dto'
+import { BusesRepository } from './buses.repository'
+import { BusFiltersReqDto } from './dto/req/bus-filters.dto'
 import { DisplayableException } from 'src/common/exceptions/displayable.exception'
 
 @Injectable()
-export class CitiesService {
-  constructor(private repository: CitiesRepository) {}
+export class BusesService {
+  constructor(private repository: BusesRepository) {}
 
-  async findAll(filters: CityFiltersReqDto) {
+  async findAll(filters: BusFiltersReqDto) {
     const [entities, total] = await this.repository.findMany(filters)
 
     return {
@@ -21,10 +21,9 @@ export class CitiesService {
     }
   }
 
-  async create(dto: CreateCityReqDto) {
-    await this.validateCityUniqueness({
-      name: dto.name,
-      province: dto.province,
+  async create(dto: CreateBusReqDto) {
+    await this.validateBusUniqueness({
+      licensePlate: dto.licensePlate,
     })
 
     const entity = await this.repository.create(dto)
@@ -32,13 +31,12 @@ export class CitiesService {
     return !!entity
   }
 
-  async update(id: number, dto: UpdateCityReqDto) {
+  async update(id: number, dto: UpdateBusReqDto) {
     await this.findOne(id)
 
-    if (dto.name && dto.province) {
-      await this.validateCityUniqueness({
-        name: dto.name,
-        province: dto.province,
+    if (dto.licensePlate) {
+      await this.validateBusUniqueness({
+        licensePlate: dto.licensePlate,
         excludeId: id,
       })
     }
@@ -52,7 +50,7 @@ export class CitiesService {
     const found = await this.repository.findById(id)
 
     if (!found) {
-      throw new NotFoundException(`City with id ${id} not found`)
+      throw new NotFoundException(`Bus with id ${id} not found`)
     }
 
     return found
@@ -66,33 +64,33 @@ export class CitiesService {
     return !!deleted
   }
 
-  private async validateCityUniqueness({
-    name,
-    province,
+  private async validateBusUniqueness({
+    licensePlate,
     excludeId,
   }: {
-    name: string
-    province: string
+    licensePlate: string
     excludeId?: number
   }) {
     const existing = await this.repository.verifyIfExists({
-      name,
-      province,
+      licensePlate,
       excludeId,
     })
 
     if (existing) {
-      if (existing.name === name) {
+      if (existing.licensePlate === licensePlate) {
         throw new DisplayableException(
-          'El nombre de la ciudad ya está en uso',
-          HttpStatus.CONFLICT,
-        )
-      } else if (existing.province === province) {
-        throw new DisplayableException(
-          'El nombre de la provincia ya está en uso',
+          'La matrícula del bus ya está en uso',
           HttpStatus.CONFLICT,
         )
       }
     }
+  }
+
+  async changeStatus(id: number) {
+    const found = await this.findOne(id) // Verify user exists
+
+    const entity = await this.repository.changeStatus(id, !found.isActive)
+
+    return !!entity
   }
 }

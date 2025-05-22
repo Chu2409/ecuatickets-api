@@ -6,6 +6,7 @@ import { UsersModule } from './core/users/users.module'
 import { AuthModule } from './core/auth/auth.module'
 import { CompaniesModule } from './core/companies/companies.module'
 import { CitiesModule } from './core/cities/cities.module'
+import { BusesModule } from './core/buses/buses.module'
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { CitiesModule } from './core/cities/cities.module'
     AuthModule,
     CompaniesModule,
     CitiesModule,
+    BusesModule,
   ],
   providers: [ResponseInterceptor],
 })
