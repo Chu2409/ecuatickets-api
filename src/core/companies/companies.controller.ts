@@ -1,37 +1,35 @@
 import {
-  Body,
   Controller,
   Get,
-  HttpStatus,
-  Param,
-  ParseIntPipe,
-  Patch,
   Post,
+  Body,
+  Patch,
+  Param,
   Query,
+  ParseIntPipe,
 } from '@nestjs/common'
-import { UsersService } from './users.service'
-import { CreateUserReqDto } from './dto/req/create-user.dto'
-import { UpdateUserReqDto } from './dto/req/update-user.dto'
-import { BaseParamsReqDto } from 'src/common/dtos/req/base-params.dto'
-import { ApiTags, ApiOperation } from '@nestjs/swagger'
+import { CompaniesService } from './companies.service'
+import { CreateCompanyReqDto } from './dto/req/create-company.dto'
+import { UpdateCompanyReqDto } from './dto/req/update-company.dto'
+import { ApiOperation, ApiTags } from '@nestjs/swagger'
 import {
   ApiPaginatedResponse,
   ApiStandardResponse,
 } from 'src/common/decorators/api-standard-response.decorator'
-import { BaseUserResDto } from './dto/res/user.dto'
-import { UserFiltersReqDto } from './dto/req/user-filters.dto'
+import { CompanyResDto } from './dto/res/compy.dto'
+import { CompanyFiltersReqDto } from './dto/req/company-filters.dto'
 
-@ApiTags('Users')
-@Controller('users')
-export class UsersController {
-  constructor(private readonly service: UsersService) {}
+@ApiTags('Companies')
+@Controller('companies')
+export class CompaniesController {
+  constructor(private readonly service: CompaniesService) {}
 
   @Post()
   @ApiOperation({
     summary: 'Create a new user',
   })
   @ApiStandardResponse()
-  create(@Body() dto: CreateUserReqDto) {
+  create(@Body() dto: CreateCompanyReqDto) {
     return this.service.create(dto)
   }
 
@@ -39,8 +37,8 @@ export class UsersController {
   @ApiOperation({
     summary: 'Get all users',
   })
-  @ApiPaginatedResponse(BaseUserResDto, HttpStatus.OK)
-  findAll(@Query() paginationDto: UserFiltersReqDto) {
+  @ApiPaginatedResponse(CompanyResDto)
+  findAll(@Query() paginationDto: CompanyFiltersReqDto) {
     return this.service.findAll(paginationDto)
   }
 
@@ -48,7 +46,7 @@ export class UsersController {
   @ApiOperation({
     summary: 'Get a user by id',
   })
-  @ApiStandardResponse(BaseUserResDto, HttpStatus.OK)
+  @ApiStandardResponse(CompanyResDto)
   findById(@Param('id', ParseIntPipe) id: number) {
     return this.service.findOne(id)
   }
@@ -58,7 +56,10 @@ export class UsersController {
     summary: 'Update a user by id',
   })
   @ApiStandardResponse()
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserReqDto) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateCompanyReqDto,
+  ) {
     return this.service.update(id, dto)
   }
 

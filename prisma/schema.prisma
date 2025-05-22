@@ -68,8 +68,6 @@ model Company {
   id             Int      @id @default(autoincrement()) @map("id")
   name           String   @map("name")
   logoUrl        String?  @map("logo_url")
-  themeColors    Json?    @map("theme_colors")
-  socialLinks    Json?    @map("social_links")
   supportContact String?  @map("support_contact")
   isActive       Boolean  @default(true) @map("is_active")
   createdAt      DateTime @default(now()) @map("created_at")

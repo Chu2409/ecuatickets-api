@@ -8,10 +8,10 @@ import { UsersRepository } from './users.repository'
 
 @Injectable()
 export class UsersService {
-  constructor(private usersRepository: UsersRepository) {}
+  constructor(private repository: UsersRepository) {}
 
   async findAll(filters: UserFiltersReqDto) {
-    const [entities, total] = await this.usersRepository.findMany(filters)
+    const [entities, total] = await this.repository.findMany(filters)
 
     return {
       records: entities,
@@ -31,7 +31,7 @@ export class UsersService {
 
     dto.password = hashPassword(dto.password)
 
-    const entity = await this.usersRepository.create(dto)
+    const entity = await this.repository.create(dto)
 
     return !!entity
   }
@@ -52,13 +52,13 @@ export class UsersService {
       dto.password = hashPassword(dto.password)
     }
 
-    const entity = await this.usersRepository.updateWithPerson(id, dto)
+    const entity = await this.repository.updateWithPerson(id, dto)
 
     return !!entity
   }
 
   async findOne(id: number) {
-    const userFound = await this.usersRepository.findById(id)
+    const userFound = await this.repository.findById(id)
 
     if (!userFound) {
       throw new NotFoundException(`User with id ${id} not found`)
@@ -68,7 +68,7 @@ export class UsersService {
   }
 
   async findOneWithPasswordByUsername(username: string) {
-    const userFound = await this.usersRepository.verifyIfExists({ username })
+    const userFound = await this.repository.verifyIfExists({ username })
 
     return userFound
   }
@@ -76,7 +76,7 @@ export class UsersService {
   async remove(id: number) {
     await this.findOne(id) // Verify user exists
 
-    const deletedUser = await this.usersRepository.remove(id)
+    const deletedUser = await this.repository.remove(id)
 
     return !!deletedUser
   }
@@ -94,7 +94,7 @@ export class UsersService {
   }) {
     if (!username && !email) return
 
-    const existingUser = await this.usersRepository.verifyIfExists({
+    const existingUser = await this.repository.verifyIfExists({
       username,
       email,
       excludeUserId,
@@ -124,7 +124,7 @@ export class UsersService {
   async changeStatus(id: number) {
     const user = await this.findOne(id)
 
-    const changed = await this.usersRepository.changeStatus(id, !user.isActive)
+    const changed = await this.repository.changeStatus(id, !user.isActive)
 
     return !!changed
   }
