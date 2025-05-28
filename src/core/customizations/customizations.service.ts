@@ -26,10 +26,8 @@ export class CustomizationsService {
   }
 
   async create(dto: CreateCustomizationDto) {
-    // Verify color exists
     await this.colorsService.findOne(dto.colorId)
 
-    // Verify company doesn't already have customization
     await this.validateCompanyCustomizationUniqueness({
       companyId: dto.companyId,
     })
@@ -41,7 +39,6 @@ export class CustomizationsService {
   async update(id: number, dto: UpdateCustomizationDto) {
     await this.findOne(id)
 
-    // Verify color exists if colorId is provided
     if (dto.colorId) {
       await this.colorsService.findOne(dto.colorId)
     }

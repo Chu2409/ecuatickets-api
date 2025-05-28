@@ -14,11 +14,14 @@ export class FileUploadService {
     'image/png',
     'image/webp',
   ]
-  private readonly maxFileSize = 5 * 1024 * 1024 // 5MB
+  private readonly maxFileSize = 5 * 1024 * 1024
 
   constructor(private configService: ConfigService) {
     this.uploadPath = this.configService.get('UPLOAD_PATH', './uploads/images')
-    this.baseUrl = this.configService.get('BASE_URL', 'http://localhost:3000')
+    this.baseUrl = this.configService.get(
+      'BASE_URL',
+      'http://localhost:' + process.env.PORT,
+    )
     this.ensureUploadDirectory()
   }
 
@@ -36,7 +39,7 @@ export class FileUploadService {
       await fs.writeFile(filePath, file.buffer)
       return `${this.baseUrl}/uploads/images/${fileName}`
     } catch (error) {
-      throw new BadRequestException('Error al guardar el archivo')
+      throw new BadRequestException('Error al guardar el archivoz')
     }
   }
 
@@ -45,29 +48,24 @@ export class FileUploadService {
       const fileName = path.basename(imageUrl)
       const filePath = path.join(this.uploadPath, fileName)
 
-      // Check if file exists before trying to delete
       try {
         await fs.access(filePath)
         await fs.unlink(filePath)
       } catch (error) {
-        // File doesn't exist, which is fine
         console.warn(`File not found for deletion: ${filePath}`)
       }
     } catch (error) {
       console.error('Error deleting file:', error)
-      // Don't throw error as this is usually called during cleanup
     }
   }
 
   private validateFile(file: Express.Multer.File): void {
-    // Validate file type
     if (!this.allowedMimeTypes.includes(file.mimetype)) {
       throw new BadRequestException(
         `Tipo de archivo no permitido. Tipos permitidos: ${this.allowedMimeTypes.join(', ')}`,
       )
     }
 
-    // Validate file size
     if (file.size > this.maxFileSize) {
       throw new BadRequestException(
         `El archivo es demasiado grande. Tamaño máximo: ${this.maxFileSize / (1024 * 1024)}MB`,

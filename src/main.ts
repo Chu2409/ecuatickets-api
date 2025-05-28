@@ -9,12 +9,13 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { ApiPaginatedRes, ApiRes } from './common/dtos/res/api-response.dto'
 import { BaseParamsReqDto } from './common/dtos/req/base-params.dto'
 import { join } from 'path'
-import { NestExpressApplication } from '@nestjs/platform-express' // <-- esta línea
+import { NestExpressApplication } from '@nestjs/platform-express'
+import { existsSync, mkdirSync } from 'fs'
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     cors: true,
-  }) // <-- este cambio permite usar useStaticAssets
+  })
 
   const configService = app.get(CustomConfigService)
   const port = configService.env.PORT
@@ -37,8 +38,15 @@ async function bootstrap() {
   })
   app.setGlobalPrefix('api')
 
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-    prefix: '/uploads/',
+  const uploadsPath = join(__dirname, '..', '..', 'uploads', 'images')
+
+  if (!existsSync(uploadsPath)) {
+    mkdirSync(uploadsPath, { recursive: true })
+    Logger.log(`Created uploads directory at: ${uploadsPath}`, 'Bootstrap')
+  }
+
+  app.useStaticAssets(uploadsPath, {
+    prefix: '/uploads/images/',
   })
 
   const config = new DocumentBuilder()
@@ -91,6 +99,7 @@ async function bootstrap() {
     'API versioning enabled. Use /api/v1/ to access the API.',
     'Bootstrap',
   )
+  Logger.log(join(__dirname, '..', '..', 'uploads', 'images'))
 }
 
 void bootstrap()
