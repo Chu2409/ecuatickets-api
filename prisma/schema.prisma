@@ -73,9 +73,10 @@ model Company {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  users       User[]
-  buses       Bus[]
-  frequencies Frequency[]
+  users                User[]
+  buses                Bus[]
+  frequencies          Frequency[]
+  CompanyCustomization CompanyCustomization[]
 
   @@map("companies")
 }
@@ -252,4 +253,25 @@ model Notification {
   user User @relation(fields: [userId], references: [id])
 
   @@map("notifications")
+}
+
+model Color {
+  id        Int                    @id @default(autoincrement()) @map("id")
+  name      String                 @unique @map("name")
+  hexCode   String                 @unique @map("hex_code")
+  companies CompanyCustomization[]
+
+  @@map("colors")
+}
+
+model CompanyCustomization {
+  id        Int     @id @default(autoincrement()) @map("id")
+  companyId Int     @unique @map("company_id")
+  imageUrl  String? @map("image_url")
+  colorId   Int     @map("color_id")
+
+  company Company @relation(fields: [companyId], references: [id])
+  color   Color   @relation(fields: [colorId], references: [id])
+
+  @@map("company_customizations")
 }

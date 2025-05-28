@@ -7,6 +7,8 @@ import { AuthModule } from './core/auth/auth.module'
 import { CompaniesModule } from './core/companies/companies.module'
 import { CitiesModule } from './core/cities/cities.module'
 import { BusesModule } from './core/buses/buses.module'
+import { CustomizationsModule } from './core/customizations/customizations.module';
+import { ColorsModule } from './core/colors/colors.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { BusesModule } from './core/buses/buses.module'
     CompaniesModule,
     CitiesModule,
     BusesModule,
+    CustomizationsModule,
+    ColorsModule,
   ],
   providers: [ResponseInterceptor],
 })

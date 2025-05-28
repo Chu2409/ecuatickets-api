@@ -1,0 +1,92 @@
+import { Injectable, BadRequestException } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import * as path from 'path'
+import * as fs from 'fs/promises'
+import { v4 as uuidv4 } from 'uuid'
+
+@Injectable()
+export class FileUploadService {
+  private readonly uploadPath: string
+  private readonly baseUrl: string
+  private readonly allowedMimeTypes = [
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+  ]
+  private readonly maxFileSize = 5 * 1024 * 1024 // 5MB
+
+  constructor(private configService: ConfigService) {
+    this.uploadPath = this.configService.get('UPLOAD_PATH', './uploads/images')
+    this.baseUrl = this.configService.get('BASE_URL', 'http://localhost:3000')
+    this.ensureUploadDirectory()
+  }
+
+  async uploadImage(file: Express.Multer.File): Promise<string> {
+    if (!file) {
+      throw new BadRequestException('No se proporcionó ningún archivo')
+    }
+
+    this.validateFile(file)
+
+    const fileName = this.generateFileName(file.originalname)
+    const filePath = path.join(this.uploadPath, fileName)
+
+    try {
+      await fs.writeFile(filePath, file.buffer)
+      return `${this.baseUrl}/uploads/images/${fileName}`
+    } catch (error) {
+      throw new BadRequestException('Error al guardar el archivo')
+    }
+  }
+
+  async deleteImage(imageUrl: string): Promise<void> {
+    try {
+      const fileName = path.basename(imageUrl)
+      const filePath = path.join(this.uploadPath, fileName)
+
+      // Check if file exists before trying to delete
+      try {
+        await fs.access(filePath)
+        await fs.unlink(filePath)
+      } catch (error) {
+        // File doesn't exist, which is fine
+        console.warn(`File not found for deletion: ${filePath}`)
+      }
+    } catch (error) {
+      console.error('Error deleting file:', error)
+      // Don't throw error as this is usually called during cleanup
+    }
+  }
+
+  private validateFile(file: Express.Multer.File): void {
+    // Validate file type
+    if (!this.allowedMimeTypes.includes(file.mimetype)) {
+      throw new BadRequestException(
+        `Tipo de archivo no permitido. Tipos permitidos: ${this.allowedMimeTypes.join(', ')}`,
+      )
+    }
+
+    // Validate file size
+    if (file.size > this.maxFileSize) {
+      throw new BadRequestException(
+        `El archivo es demasiado grande. Tamaño máximo: ${this.maxFileSize / (1024 * 1024)}MB`,
+      )
+    }
+  }
+
+  private generateFileName(originalName: string): string {
+    const ext = path.extname(originalName)
+    const timestamp = Date.now()
+    const uuid = uuidv4()
+    return `${timestamp}-${uuid}${ext}`
+  }
+
+  private async ensureUploadDirectory(): Promise<void> {
+    try {
+      await fs.access(this.uploadPath)
+    } catch {
+      await fs.mkdir(this.uploadPath, { recursive: true })
+    }
+  }
+}

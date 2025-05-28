@@ -1,0 +1,105 @@
+import { Injectable } from '@nestjs/common'
+import { CustomizationFiltersDto } from './dto/req/customization-filters.dto'
+import { DatabaseService } from 'src/global/database/database.service'
+import { UpdateCustomizationDto } from './dto/req/update-customization.dto'
+import { CreateCustomizationDto } from './dto/req/create-customization.dto'
+
+@Injectable()
+export class CompanyCustomizationsRepository {
+  constructor(private prisma: DatabaseService) {}
+
+  async findMany(filters: CustomizationFiltersDto) {
+    const { page, limit, companyId, colorId } = filters
+    const skip = (page - 1) * limit
+
+    const where = {
+      ...(companyId && { companyId }),
+      ...(colorId && { colorId }),
+    }
+
+    const [records, total] = await Promise.all([
+      this.prisma.companyCustomization.findMany({
+        where,
+        include: {
+          color: true,
+          company: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+        skip,
+        take: limit,
+        orderBy: { id: 'desc' },
+      }),
+      this.prisma.companyCustomization.count({ where }),
+    ])
+
+    return [records, total] as const
+  }
+
+  async findById(id: number) {
+    return await this.prisma.companyCustomization.findUnique({
+      where: { id },
+      include: {
+        color: true,
+        company: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    })
+  }
+
+  async findByCompanyId(companyId: number) {
+    return await this.prisma.companyCustomization.findUnique({
+      where: { companyId },
+      include: {
+        color: true,
+      },
+    })
+  }
+
+  async create(dto: CreateCustomizationDto) {
+    return await this.prisma.companyCustomization.create({
+      data: dto,
+      include: {
+        color: true,
+      },
+    })
+  }
+
+  async update(id: number, dto: UpdateCustomizationDto) {
+    return await this.prisma.companyCustomization.update({
+      where: { id },
+      data: dto,
+      include: {
+        color: true,
+      },
+    })
+  }
+
+  async remove(id: number) {
+    return await this.prisma.companyCustomization.delete({
+      where: { id },
+    })
+  }
+
+  async verifyIfExists({
+    companyId,
+    excludeId,
+  }: {
+    companyId: number
+    excludeId?: number
+  }) {
+    return await this.prisma.companyCustomization.findFirst({
+      where: {
+        companyId,
+        ...(excludeId && { id: { not: excludeId } }),
+      },
+    })
+  }
+}
