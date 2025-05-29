@@ -15,7 +15,6 @@ export class ColorsService {
 
   async create(dto: CreateColorDto) {
     await this.validateColorUniqueness({
-      name: dto.name,
       hexCode: dto.hexCode,
     })
 
@@ -26,9 +25,8 @@ export class ColorsService {
   async update(id: number, dto: UpdateColorDto) {
     await this.findOne(id)
 
-    if (dto.name || dto.hexCode) {
+    if (dto.hexCode) {
       await this.validateColorUniqueness({
-        name: dto.name,
         hexCode: dto.hexCode,
         excludeId: id,
       })
@@ -70,12 +68,6 @@ export class ColorsService {
     })
 
     if (existing) {
-      if (existing.name === name) {
-        throw new DisplayableException(
-          'Ya existe un color con este nombre',
-          HttpStatus.CONFLICT,
-        )
-      }
       if (existing.hexCode === hexCode) {
         throw new DisplayableException(
           'Ya existe un color con este código hexadecimal',

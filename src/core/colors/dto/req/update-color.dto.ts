@@ -1,15 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger'
-import { IsHexColor, IsOptional, IsString } from 'class-validator'
+import { IsHexColor, IsOptional } from 'class-validator'
 
 export class UpdateColorDto {
-  @IsString()
-  @IsOptional()
-  @ApiPropertyOptional({
-    description: 'Nombre del color',
-    example: 'Azul Corporativo',
-  })
-  name?: string
-
   @IsHexColor()
   @IsOptional()
   @ApiPropertyOptional({

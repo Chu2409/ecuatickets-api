@@ -9,7 +9,7 @@ export class ColorsRepository {
 
   async findMany() {
     return await this.prisma.color.findMany({
-      orderBy: { name: 'asc' },
+      orderBy: { hexCode: 'asc' },
     })
   }
 

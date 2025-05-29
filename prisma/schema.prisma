@@ -257,7 +257,6 @@ model Notification {
 
 model Color {
   id        Int                    @id @default(autoincrement()) @map("id")
-  name      String                 @unique @map("name")
   hexCode   String                 @unique @map("hex_code")
   companies CompanyCustomization[]
 
