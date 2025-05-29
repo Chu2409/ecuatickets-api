@@ -21,12 +21,6 @@ export class CompanyCustomizationResDto {
   imageUrl: string | null
 
   @ApiProperty({
-    description: 'ID del color seleccionado',
-    example: 1,
-  })
-  colorId: number
-
-  @ApiProperty({
     description: 'Información del color',
     type: ColorResDto,
   })

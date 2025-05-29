@@ -43,8 +43,8 @@ export class ColorsController {
     summary: 'Obtener un color por ID',
   })
   @ApiStandardResponse(ColorResDto)
-  findById(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findOne(id)
+  findById(@Param('hexCode', ParseIntPipe) hexCode: string) {
+    return this.service.findOne(hexCode)
   }
 
   @Patch(':id')
@@ -52,8 +52,8 @@ export class ColorsController {
     summary: 'Actualizar un color por ID',
   })
   @ApiStandardResponse()
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateColorDto) {
-    return this.service.update(id, dto)
+  update(@Param('hexCode') hexCode: string, @Body() dto: UpdateColorDto) {
+    return this.service.update(hexCode, dto)
   }
 
   @Delete(':id')
@@ -61,7 +61,7 @@ export class ColorsController {
     summary: 'Eliminar un color por ID',
   })
   @ApiStandardResponse()
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.service.remove(id)
+  remove(@Param('hexCode') hexCode: string) {
+    return this.service.remove(hexCode)
   }
 }

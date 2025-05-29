@@ -36,12 +36,9 @@ export class CustomizationFiltersDto {
   companyId?: number
 
   @IsOptional()
-  @IsNumber()
-  @IsPositive()
-  @Type(() => Number)
   @ApiPropertyOptional({
-    description: 'Filtrar por ID de color',
-    example: 1,
+    description: 'Filtrar por código hexadecimal de color',
+    example: '#FF5733',
   })
-  colorId?: number
+  hexCode?: string
 }

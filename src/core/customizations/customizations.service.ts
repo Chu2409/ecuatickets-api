@@ -26,7 +26,7 @@ export class CustomizationsService {
   }
 
   async create(dto: CreateCustomizationDto) {
-    await this.colorsService.findOne(dto.colorId)
+    await this.colorsService.findOne(dto.hexCode)
 
     await this.validateCompanyCustomizationUniqueness({
       companyId: dto.companyId,
@@ -39,8 +39,8 @@ export class CustomizationsService {
   async update(id: number, dto: UpdateCustomizationDto) {
     await this.findOne(id)
 
-    if (dto.colorId) {
-      await this.colorsService.findOne(dto.colorId)
+    if (dto.hexCode) {
+      await this.colorsService.findOne(dto.hexCode)
     }
 
     const entity = await this.repository.update(id, dto)

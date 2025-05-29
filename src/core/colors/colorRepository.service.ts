@@ -13,9 +13,9 @@ export class ColorsRepository {
     })
   }
 
-  async findById(id: number) {
+  async findById(hexCode: string) {
     return await this.prisma.color.findUnique({
-      where: { id },
+      where: { hexCode },
     })
   }
 
@@ -25,16 +25,16 @@ export class ColorsRepository {
     })
   }
 
-  async update(id: number, dto: UpdateColorDto) {
+  async update(hexCode: string, dto: UpdateColorDto) {
     return await this.prisma.color.update({
-      where: { id },
+      where: { hexCode },
       data: dto,
     })
   }
 
-  async remove(id: number) {
+  async remove(hexCode: string) {
     return await this.prisma.color.delete({
-      where: { id },
+      where: { hexCode },
     })
   }
 

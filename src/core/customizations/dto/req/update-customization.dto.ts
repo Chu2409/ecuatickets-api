@@ -10,12 +10,10 @@ export class UpdateCustomizationDto {
   })
   imageUrl?: string
 
-  @IsNumber()
-  @IsPositive()
   @IsOptional()
   @ApiPropertyOptional({
-    description: 'ID del color seleccionado',
-    example: 1,
+    description: 'Código hexadecimal del color seleccionado',
+    example: '#FF5733',
   })
-  colorId?: number
+  hexCode?: string
 }

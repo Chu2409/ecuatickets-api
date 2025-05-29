@@ -74,13 +74,13 @@ export class CustomizationsController {
   @ApiStandardResponse()
   async createWithUpload(
     @UploadedFile() file: Express.Multer.File,
-    @Body() body: { companyId: string; colorId: string },
+    @Body() body: { companyId: string; hexcode: string },
   ) {
     const imageUrl = await this.fileUploadService.uploadImage(file)
 
     const dto: CreateCustomizationDto = {
       companyId: parseInt(body.companyId),
-      colorId: parseInt(body.colorId),
+      hexCode: body.hexcode,
       imageUrl,
     }
 

@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { IsNumber, IsOptional, IsPositive, IsUrl } from 'class-validator'
+import {
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  IsUrl,
+} from 'class-validator'
 
 export class CreateCustomizationDto {
   @IsNumber()
@@ -18,11 +24,10 @@ export class CreateCustomizationDto {
   })
   imageUrl?: string
 
-  @IsNumber()
-  @IsPositive()
+  @IsString()
   @ApiProperty({
-    description: 'ID del color seleccionado',
-    example: 1,
+    description: 'Código hexadecimal del color seleccionado',
+    example: '#FF5733',
   })
-  colorId: number
+  hexCode: string
 }

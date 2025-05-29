@@ -256,8 +256,7 @@ model Notification {
 }
 
 model Color {
-  id        Int                    @id @default(autoincrement()) @map("id")
-  hexCode   String                 @unique @map("hex_code")
+  hexCode   String                 @id @map("hex_code")
   companies CompanyCustomization[]
 
   @@map("colors")
@@ -267,10 +266,10 @@ model CompanyCustomization {
   id        Int     @id @default(autoincrement()) @map("id")
   companyId Int     @unique @map("company_id")
   imageUrl  String? @map("image_url")
-  colorId   Int     @map("color_id")
+  hexCode   String  @map("hex_code")
 
   company Company @relation(fields: [companyId], references: [id])
-  color   Color   @relation(fields: [colorId], references: [id])
+  color   Color   @relation(fields: [hexCode], references: [hexCode])
 
   @@map("company_customizations")
 }

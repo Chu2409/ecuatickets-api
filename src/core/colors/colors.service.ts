@@ -22,33 +22,32 @@ export class ColorsService {
     return !!entity
   }
 
-  async update(id: number, dto: UpdateColorDto) {
-    await this.findOne(id)
+  async update(hexCode: string, dto: UpdateColorDto) {
+    await this.findOne(hexCode)
 
     if (dto.hexCode) {
       await this.validateColorUniqueness({
         hexCode: dto.hexCode,
-        excludeId: id,
       })
     }
 
-    const entity = await this.repository.update(id, dto)
+    const entity = await this.repository.update(hexCode, dto)
     return !!entity
   }
 
-  async findOne(id: number) {
-    const found = await this.repository.findById(id)
+  async findOne(hexCode: string) {
+    const found = await this.repository.findById(hexCode)
 
     if (!found) {
-      throw new NotFoundException(`Color with id ${id} not found`)
+      throw new NotFoundException(`Color with hexCode ${hexCode} not found`)
     }
 
     return found
   }
 
-  async remove(id: number) {
-    await this.findOne(id)
-    const deleted = await this.repository.remove(id)
+  async remove(hexCode: string) {
+    await this.findOne(hexCode)
+    const deleted = await this.repository.remove(hexCode)
     return !!deleted
   }
 
