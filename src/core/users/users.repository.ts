@@ -120,6 +120,9 @@ export class UsersRepository {
       omit: {
         companyId: true,
       },
+      include: {
+        company: true,
+      },
     })
   }
 
