@@ -60,9 +60,6 @@ export class UsersRepository {
         orderBy: {
           id: 'desc',
         },
-        omit: {
-          companyId: true,
-        },
       }),
       this.dbService.user.count({
         where: whereClause,
@@ -75,9 +72,6 @@ export class UsersRepository {
   async findById(id: number) {
     return this.dbService.user.findUnique({
       where: { id },
-      omit: {
-        companyId: true,
-      },
     })
   }
 

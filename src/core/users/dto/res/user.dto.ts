@@ -68,6 +68,12 @@ export class BaseUserResDto {
     example: '2023-10-01T00:00:00.000Z',
   })
   updatedAt: Date
+
+  @ApiProperty({
+    description: 'The company id of the user',
+    example: 1,
+  })
+  companyId: number | null
 }
 
 export class UserCompanyResDto extends BaseUserResDto {

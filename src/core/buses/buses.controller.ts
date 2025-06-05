@@ -11,16 +11,20 @@ import {
 import { BusesService } from './buses.service'
 import { CreateBusReqDto } from './dto/req/create-bus.dto'
 import { UpdateBusReqDto } from './dto/req/update-bus.dto'
-import { ApiOperation, ApiTags } from '@nestjs/swagger'
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import {
   ApiPaginatedResponse,
   ApiStandardResponse,
 } from 'src/common/decorators/api-standard-response.decorator'
 import { BusResDto } from './dto/res/bus.dto'
 import { BusFiltersReqDto } from './dto/req/bus-filters.dto'
+import { GetCompanyId } from '../auth/decorators/get-company-id.decorator'
+import { Auth } from '../auth/decorators/auth.decorator'
 
 @ApiTags('Buses')
 @Controller('buses')
+@ApiBearerAuth()
+@Auth()
 export class BusesController {
   constructor(private readonly service: BusesService) {}
 
@@ -29,7 +33,8 @@ export class BusesController {
     summary: 'Create a new bus',
   })
   @ApiStandardResponse()
-  create(@Body() dto: CreateBusReqDto) {
+  create(@Body() dto: CreateBusReqDto, @GetCompanyId() companyId: number) {
+    dto.companyId = companyId
     return this.service.create(dto)
   }
 
@@ -38,7 +43,11 @@ export class BusesController {
     summary: 'Get all buses',
   })
   @ApiPaginatedResponse(BusResDto)
-  findAll(@Query() paginationDto: BusFiltersReqDto) {
+  findAll(
+    @Query() paginationDto: BusFiltersReqDto,
+    @GetCompanyId() companyId: number,
+  ) {
+    paginationDto.companyId = companyId
     return this.service.findAll(paginationDto)
   }
 
