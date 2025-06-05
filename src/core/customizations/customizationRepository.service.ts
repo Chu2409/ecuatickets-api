@@ -9,12 +9,12 @@ export class CompanyCustomizationsRepository {
   constructor(private prisma: DatabaseService) {}
 
   async findMany(filters: CustomizationFiltersDto) {
-    const { page, limit, companyId, hexCode } = filters
+    const { page, limit, companyId, hexcode } = filters
     const skip = (page - 1) * limit
 
     const where = {
       ...(companyId && { companyId }),
-      ...(hexCode && { hexCode }),
+      ...(hexcode && { hexcode }),
     }
 
     const [records, total] = await Promise.all([
