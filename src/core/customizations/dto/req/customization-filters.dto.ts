@@ -40,5 +40,5 @@ export class CustomizationFiltersDto {
     description: 'Filtrar por código hexadecimal de color',
     example: '#FF5733',
   })
-  hexCode?: string
+  hexcode?: string
 }

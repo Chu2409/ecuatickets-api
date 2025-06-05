@@ -8,11 +8,8 @@ import {
   Delete,
   Query,
   ParseIntPipe,
-  UseInterceptors,
-  UploadedFile,
 } from '@nestjs/common'
-import { FileInterceptor } from '@nestjs/platform-express'
-import { ApiOperation, ApiTags, ApiConsumes, ApiBody } from '@nestjs/swagger'
+import { ApiOperation, ApiTags } from '@nestjs/swagger'
 import {
   ApiPaginatedResponse,
   ApiStandardResponse,
@@ -38,52 +35,6 @@ export class CustomizationsController {
   })
   @ApiStandardResponse()
   create(@Body() dto: CreateCustomizationDto) {
-    return this.service.create(dto)
-  }
-
-  @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({
-    summary: 'Crear customización con archivo de imagen',
-  })
-  @ApiBody({
-    description: 'Archivo de imagen y datos de customización',
-    schema: {
-      type: 'object',
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-          description: 'Archivo de imagen (JPG, PNG, WebP)',
-        },
-        companyId: {
-          type: 'number',
-          description: 'ID de la compañía',
-          example: 1,
-        },
-        colorId: {
-          type: 'number',
-          description: 'ID del color',
-          example: 1,
-        },
-      },
-      required: ['file', 'companyId', 'colorId'],
-    },
-  })
-  @ApiStandardResponse()
-  async createWithUpload(
-    @UploadedFile() file: Express.Multer.File,
-    @Body() body: { companyId: string; hexcode: string },
-  ) {
-    const imageUrl = await this.fileUploadService.uploadImage(file)
-
-    const dto: CreateCustomizationDto = {
-      companyId: parseInt(body.companyId),
-      hexcode: body.hexcode,
-      imageUrl,
-    }
-
     return this.service.create(dto)
   }
 
@@ -123,47 +74,6 @@ export class CustomizationsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCustomizationDto,
   ) {
-    return this.service.update(id, dto)
-  }
-
-  @Patch(':id/upload')
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({
-    summary: 'Actualizar customización con nuevo archivo de imagen',
-  })
-  @ApiBody({
-    description: 'Archivo de imagen y datos opcionales',
-    schema: {
-      type: 'object',
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-          description: 'Archivo de imagen (JPG, PNG, WebP)',
-        },
-        colorId: {
-          type: 'number',
-          description: 'ID del color (opcional)',
-          example: 1,
-        },
-      },
-      required: ['file'],
-    },
-  })
-  @ApiStandardResponse()
-  async updateWithUpload(
-    @Param('id', ParseIntPipe) id: number,
-    @UploadedFile() file: Express.Multer.File,
-    @Body() body: { hexcode: string },
-  ) {
-    const imageUrl = await this.fileUploadService.uploadImage(file)
-
-    const dto: UpdateCustomizationDto = {
-      imageUrl,
-      hexcode: body.hexcode,
-    }
-
     return this.service.update(id, dto)
   }
 
