@@ -4,9 +4,8 @@ import {
   IsString,
   IsBoolean,
   IsOptional,
-  IsPositive,
-  IsNumber,
   IsUrl,
+  ValidateIf,
 } from 'class-validator'
 
 export class CreateBusReqDto {
@@ -57,11 +56,6 @@ export class CreateBusReqDto {
   })
   isActive?: boolean
 
-  @IsNumber()
-  @IsPositive()
-  @ApiProperty({
-    description: 'Company ID that owns the bus',
-    example: 1,
-  })
+  @ValidateIf(() => false)
   companyId: number
 }
