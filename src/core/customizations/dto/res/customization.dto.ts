@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { ColorResDto } from '../../../colors/dto/res/color.dto'
 
 export class CompanyCustomizationResDto {
   @ApiProperty({
@@ -22,7 +21,6 @@ export class CompanyCustomizationResDto {
 
   @ApiProperty({
     description: 'Información del color',
-    type: ColorResDto,
   })
-  color: ColorResDto
+  hexcode: string
 }

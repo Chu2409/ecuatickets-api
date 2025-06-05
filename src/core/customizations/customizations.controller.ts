@@ -80,7 +80,7 @@ export class CustomizationsController {
 
     const dto: CreateCustomizationDto = {
       companyId: parseInt(body.companyId),
-      hexCode: body.hexcode,
+      hexcode: body.hexcode,
       imageUrl,
     }
 
@@ -155,13 +155,13 @@ export class CustomizationsController {
   async updateWithUpload(
     @Param('id', ParseIntPipe) id: number,
     @UploadedFile() file: Express.Multer.File,
-    @Body() body: { colorId?: string },
+    @Body() body: { hexcode: string },
   ) {
     const imageUrl = await this.fileUploadService.uploadImage(file)
 
     const dto: UpdateCustomizationDto = {
       imageUrl,
-      ...(body.colorId && { colorId: parseInt(body.colorId) }),
+      hexcode: body.hexcode,
     }
 
     return this.service.update(id, dto)

@@ -15,5 +15,5 @@ export class UpdateCustomizationDto {
     description: 'Código hexadecimal del color seleccionado',
     example: '#FF5733',
   })
-  hexCode?: string
+  hexcode: string
 }

@@ -20,15 +20,6 @@ export class CompanyCustomizationsRepository {
     const [records, total] = await Promise.all([
       this.prisma.companyCustomization.findMany({
         where,
-        include: {
-          color: true,
-          company: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
         skip,
         take: limit,
         orderBy: { id: 'desc' },
@@ -42,33 +33,18 @@ export class CompanyCustomizationsRepository {
   async findById(id: number) {
     return await this.prisma.companyCustomization.findUnique({
       where: { id },
-      include: {
-        color: true,
-        company: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
     })
   }
 
   async findByCompanyId(companyId: number) {
     return await this.prisma.companyCustomization.findUnique({
       where: { companyId },
-      include: {
-        color: true,
-      },
     })
   }
 
   async create(dto: CreateCustomizationDto) {
     return await this.prisma.companyCustomization.create({
       data: dto,
-      include: {
-        color: true,
-      },
     })
   }
 
@@ -76,9 +52,6 @@ export class CompanyCustomizationsRepository {
     return await this.prisma.companyCustomization.update({
       where: { id },
       data: dto,
-      include: {
-        color: true,
-      },
     })
   }
 

@@ -255,21 +255,12 @@ model Notification {
   @@map("notifications")
 }
 
-model Color {
-  hexCode   String                 @id @map("hex_code")
-  companies CompanyCustomization[]
-
-  @@map("colors")
-}
-
 model CompanyCustomization {
   id        Int     @id @default(autoincrement()) @map("id")
   companyId Int     @unique @map("company_id")
   imageUrl  String? @map("image_url")
-  hexCode   String  @map("hex_code")
-
-  company Company @relation(fields: [companyId], references: [id])
-  color   Color   @relation(fields: [hexCode], references: [hexCode])
+  company   Company @relation(fields: [companyId], references: [id])
+  hexcode   String
 
   @@map("company_customizations")
 }
