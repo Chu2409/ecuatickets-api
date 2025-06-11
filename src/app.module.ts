@@ -9,6 +9,7 @@ import { CitiesModule } from './core/cities/cities.module'
 import { BusesModule } from './core/buses/buses.module'
 import { CustomizationsModule } from './core/customizations/customizations.module'
 import { EmailModule } from './core/email/email.module'
+import { TicketSaleModule } from './core/ticket-sale/ticket-sale.module'
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { EmailModule } from './core/email/email.module'
     BusesModule,
     CustomizationsModule,
     EmailModule,
+    TicketSaleModule,
   ],
   providers: [ResponseInterceptor],
 })

@@ -7,6 +7,8 @@ import { buses } from './data/buses'
 import { seatTypes } from './data/seatTypes'
 import { seatConfigurations } from './data/seatConfigurations'
 import { physicalSeats } from './data/physicalSeats'
+import { frequencies } from './data/frecuencies'
+import { routeSheets } from './data/route-sheets'
 
 const prisma = new PrismaClient()
 
@@ -37,6 +39,14 @@ const main = async () => {
 
   await prisma.physicalSeat.createMany({
     data: physicalSeats,
+  })
+
+  await prisma.frequency.createMany({
+    data: frequencies,
+  })
+
+  await prisma.routeSheet.createMany({
+    data: routeSheets,
   })
 
   Logger.log('Seed data created successfully')
