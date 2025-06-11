@@ -19,7 +19,7 @@ import { MailerModule } from '@nestjs-modules/mailer'
         },
       },
       defaults: {
-        from: '"Facturación junta de agua potable" <faqua2085@facturaqua.com>',
+        from: '"Ecuatickets facturacion exitosa" <ecuatickets72@gmail.com>',
       },
     }),
   ],

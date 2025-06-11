@@ -4,20 +4,29 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common'
-import { PassengerType, PaymentMethod, PaymentStatus } from '@prisma/client'
+import {
+  PassengerType,
+  PaymentMethod,
+  PaymentStatus,
+  User,
+} from '@prisma/client'
 import { v4 as uuidv4 } from 'uuid'
 import { TicketSaleRepository } from '../ticket-sale.repository'
 import { CreateCounterSaleDto } from './dto/req/create-counter-sale.dto'
 import { SaleResponseDto } from '../dto/res/sales-response.dto'
+import { EmailService } from 'src/core/email/email.service'
 
 @Injectable()
 export class CounterSalesService {
-  constructor(private readonly ticketSaleRepository: TicketSaleRepository) {}
+  constructor(
+    private readonly ticketSaleRepository: TicketSaleRepository,
+    private readonly emailService: EmailService,
+  ) {}
 
   async processCounterSale(
     createSaleDto: CreateCounterSaleDto,
   ): Promise<SaleResponseDto> {
-    await this.validateSaleData(createSaleDto)
+    const clientData = await this.validateSaleData(createSaleDto)
 
     const seatIds = createSaleDto.passengers.map((p) => p.physicalSeatId)
     const occupiedSeats = await this.ticketSaleRepository.checkSeatAvailability(
@@ -52,6 +61,14 @@ export class CounterSalesService {
     const result = await this.ticketSaleRepository.createPaymentWithTickets(
       paymentData,
       ticketsData,
+    )
+
+    await this.emailService.sendEmail(
+      clientData.email,
+      result.payment.amount,
+      result.payment.updatedAt
+        ? result.payment.updatedAt.toISOString()
+        : 'Fecha no disponible',
     )
 
     return {
@@ -105,7 +122,7 @@ export class CounterSalesService {
 
   private async validateSaleData(
     createSaleDto: CreateCounterSaleDto,
-  ): Promise<void> {
+  ): Promise<User> {
     const routeSheet = await this.ticketSaleRepository.findRouteSheetById(
       createSaleDto.routeSheetId,
     )
@@ -165,6 +182,8 @@ export class CounterSalesService {
         )
       }
     }
+
+    return clerk
   }
 
   private async prepareTicketsData(createSaleDto: CreateCounterSaleDto) {
@@ -286,11 +305,21 @@ export class CounterSalesService {
       throw new BadRequestException('El pago no está pendiente de validación')
     }
 
-    await this.ticketSaleRepository.updatePaymentStatus(
+    const user = await this.ticketSaleRepository.updatePaymentStatus(
       paymentId,
       PaymentStatus.APPROVED,
       clerkId,
     )
+
+    if (user && user.email) {
+      await this.emailService.sendEmail(
+        user.email,
+        payment.amount,
+        payment.updatedAt
+          ? payment.updatedAt.toISOString()
+          : 'Fecha no disponible',
+      )
+    }
   }
 
   async rejectPayment(paymentId: number, clerkId: number): Promise<void> {

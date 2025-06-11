@@ -9,10 +9,14 @@ import { v4 as uuidv4 } from 'uuid'
 import { TicketSaleRepository } from '../ticket-sale.repository'
 import { CreateOnlineSaleDto } from './dto/req/create-online-sale.dto'
 import { SaleResponseDto } from '../dto/res/sales-response.dto'
+import { EmailService } from 'src/core/email/email.service'
 
 @Injectable()
 export class OnlineSalesService {
-  constructor(private readonly ticketSaleRepository: TicketSaleRepository) {}
+  constructor(
+    private readonly ticketSaleRepository: TicketSaleRepository,
+    private readonly mailService: EmailService,
+  ) {}
 
   async processOnlineSale(
     createSaleDto: CreateOnlineSaleDto,
@@ -61,6 +65,20 @@ export class OnlineSalesService {
       paymentData,
       ticketsData,
     )
+
+    if (result.payment.status === PaymentStatus.APPROVED) {
+      const customer = await this.ticketSaleRepository.findUserById(
+        createSaleDto.customerId,
+      )
+
+      if (customer?.email) {
+        await this.mailService.sendEmail(
+          customer.email,
+          paymentData.amount,
+          result.payment.updatedAt.toISOString() as string,
+        )
+      }
+    }
 
     return {
       payment: {

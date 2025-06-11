@@ -192,7 +192,7 @@ export class TicketSaleRepository {
     status: PaymentStatus,
     validatedBy?: number,
   ) {
-    return this.prisma.payment.update({
+    const payment = await this.prisma.payment.update({
       where: { id: paymentId },
       data: {
         status,
@@ -200,6 +200,14 @@ export class TicketSaleRepository {
         validatedAt: status === PaymentStatus.APPROVED ? new Date() : null,
       },
     })
+
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: payment.userId,
+      },
+    })
+
+    return user
   }
 
   async findPaymentById(paymentId: number) {
