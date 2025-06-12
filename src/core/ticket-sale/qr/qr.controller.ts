@@ -7,6 +7,7 @@ import { QrResDto } from './dto/res/qr-res.dto'
 import { ApiStandardResponse } from 'src/common/decorators/api-standard-response.decorator'
 import { Auth } from 'src/core/auth/decorators/auth.decorator'
 import { ValidateQrReqDto } from './dto/req/validate-qr.dto'
+import { USER_ROLE } from 'src/core/users/types/user-role.enum'
 
 @ApiTags('QR Codes')
 @Controller('qr')
@@ -36,6 +37,7 @@ export class QrController {
     description: 'Valida un boleto mediante su código QR',
   })
   @ApiStandardResponse(Boolean)
+  @Auth(USER_ROLE.DRIVER)
   async validateTicket(@Body() dto: ValidateQrReqDto, @GetUser() user: User) {
     return await this.qrService.validateTicket(dto, user.id)
   }

@@ -21,6 +21,8 @@ import { SaleResponseDto } from './dto/res/sales-response.dto'
 import { CreateCounterSaleDto } from './counter-sale/dto/req/create-counter-sale.dto'
 import { CreateOnlineSaleDto } from './online-sale/dto/req/create-online-sale.dto'
 import { TicketResponseDto } from './dto/res/ticket-response-dto'
+import { Auth } from '../auth/decorators/auth.decorator'
+import { USER_ROLE } from '../users/types/user-role.enum'
 
 @ApiTags('Ticket Sales')
 @Controller('ticket-sales')
@@ -53,6 +55,7 @@ export class TicketSaleController {
     status: 409,
     description: 'Conflicto - Asientos no disponibles',
   })
+  @Auth(USER_ROLE.CLERK)
   async processCounterSale(
     @Body() createSaleDto: CreateCounterSaleDto,
   ): Promise<SaleResponseDto> {
@@ -111,6 +114,7 @@ export class TicketSaleController {
     status: 400,
     description: 'El pago no está pendiente de validación',
   })
+  @Auth(USER_ROLE.CLERK)
   async validatePayment(
     @Param('paymentId', ParseIntPipe) paymentId: number,
     @Body('clerkId') clerkId: number,
@@ -141,6 +145,7 @@ export class TicketSaleController {
     status: 400,
     description: 'El pago no está pendiente de validación',
   })
+  @Auth(USER_ROLE.CLERK)
   async rejectPayment(
     @Param('paymentId', ParseIntPipe) paymentId: number,
     @Body('clerkId', ParseIntPipe) clerkId: number,
