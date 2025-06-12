@@ -292,10 +292,15 @@ export class TicketSaleRepository {
     })
   }
 
-  async findTicketByAccessCode(accessCode: string) {
+  async findTicketByAccessCode(accessCode: string, userId?: number) {
     const ticket = await this.prisma.ticket.findFirst({
       where: {
         accessCode,
+        ...(userId && {
+          payment: {
+            userId,
+          },
+        }),
       },
       include: {
         origin: true,

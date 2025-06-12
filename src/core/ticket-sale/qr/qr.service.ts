@@ -44,13 +44,30 @@ export class QrService {
       )
     }
 
-    // Verificar si el boleto ya ha sido escaneado
     const existingScan = await this.ticketSaleRepository.findTicketScan(
       ticket.id,
     )
     if (existingScan) {
       throw new DisplayableException(
         'Este boleto ya ha sido escaneado previamente',
+        HttpStatus.BAD_REQUEST,
+      )
+    }
+
+    const routeSheetDate = new Date(ticket.routeSheet.date)
+    const currentDate = new Date()
+    const oneHourBefore = new Date(routeSheetDate.getTime() - 60 * 60 * 1000) // 1 hora antes
+
+    if (currentDate < oneHourBefore) {
+      throw new DisplayableException(
+        'El boleto no puede ser validado aún. La validación está disponible 1 hora antes del viaje.',
+        HttpStatus.BAD_REQUEST,
+      )
+    }
+
+    if (currentDate > routeSheetDate) {
+      throw new DisplayableException(
+        'El boleto ha expirado. La fecha del viaje ya ha pasado.',
         HttpStatus.BAD_REQUEST,
       )
     }
