@@ -292,13 +292,15 @@ export class TicketSaleRepository {
     })
   }
 
-  async findTicketByAccessCode(accessCode: string, customerId: number) {
+  async findTicketByAccessCode(accessCode: string, userId?: number) {
     const ticket = await this.prisma.ticket.findFirst({
       where: {
         accessCode,
-        payment: {
-          userId: customerId,
-        },
+        ...(userId && {
+          payment: {
+            userId,
+          },
+        }),
       },
       include: {
         origin: true,
@@ -327,5 +329,24 @@ export class TicketSaleRepository {
     }
 
     return ticket
+  }
+
+  async findTicketScan(ticketId: number) {
+    return this.prisma.ticketScan.findFirst({
+      where: { ticketId },
+    })
+  }
+
+  async createTicketScan(data: { ticketId: number; userId: number }) {
+    return this.prisma.ticketScan.create({
+      data,
+    })
+  }
+
+  async updateTicketStatus(ticketId: number, status: string) {
+    return this.prisma.ticket.update({
+      where: { id: ticketId },
+      data: { status },
+    })
   }
 }

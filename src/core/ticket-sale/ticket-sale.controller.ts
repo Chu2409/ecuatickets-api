@@ -204,11 +204,6 @@ export class TicketSaleController {
     description: 'Código de acceso del boleto',
     type: 'string',
   })
-  @ApiParam({
-    name: 'customerId',
-    description: 'ID del cliente propietario del boleto',
-    type: 'number',
-  })
   @ApiResponse({
     status: 200,
     description: 'Información detallada del boleto',
@@ -218,13 +213,7 @@ export class TicketSaleController {
     status: 404,
     description: 'Boleto no encontrado',
   })
-  async getTicketByAccessCode(
-    @Param('accessCode') accessCode: string,
-    @Param('customerId', ParseIntPipe) customerId: number,
-  ) {
-    return await this.onlineSalesService.getTicketByAccessCode(
-      accessCode,
-      customerId,
-    )
+  async getTicketByAccessCode(@Param('accessCode') accessCode: string) {
+    return await this.onlineSalesService.getTicketByAccessCode(accessCode)
   }
 }
