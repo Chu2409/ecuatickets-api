@@ -4,8 +4,10 @@ import { CounterSalesService } from './counter-sale/counter-sale.service'
 import { OnlineSalesService } from './online-sale/online-sale.service'
 import { TicketSaleRepository } from './ticket-sale.repository'
 import { EmailService } from '../email/email.service'
+import { QrModule } from './qr/qr.module'
 
 @Module({
+  imports: [QrModule],
   controllers: [TicketSaleController],
   providers: [
     CounterSalesService,
@@ -13,5 +15,6 @@ import { EmailService } from '../email/email.service'
     TicketSaleRepository,
     EmailService,
   ],
+  exports: [QrModule],
 })
 export class TicketSaleModule {}

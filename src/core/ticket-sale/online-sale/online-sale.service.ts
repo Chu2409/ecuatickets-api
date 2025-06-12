@@ -75,7 +75,7 @@ export class OnlineSalesService {
         await this.mailService.sendEmail(
           customer.email,
           paymentData.amount,
-          result.payment.updatedAt.toISOString() as string,
+          result.payment.updatedAt.toISOString(),
         )
       }
     }
@@ -421,11 +421,9 @@ export class OnlineSalesService {
     )
   }
 
-  async getTicketByAccessCode(accessCode: string, customerId: number) {
-    const ticket = await this.ticketSaleRepository.findTicketByAccessCode(
-      accessCode,
-      customerId,
-    )
+  async getTicketByAccessCode(accessCode: string) {
+    const ticket =
+      await this.ticketSaleRepository.findTicketByAccessCode(accessCode)
 
     if (!ticket) {
       throw new NotFoundException('Boleto no encontrado')
