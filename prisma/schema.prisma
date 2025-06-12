@@ -15,6 +15,7 @@ enum PassengerType {
 }
 
 enum PaymentMethod {
+  CASH
   TRANSFER
   PAYPAL
 }
@@ -60,6 +61,7 @@ model User {
 
   notifications Notification[]
   ticketScans   TicketScan[]
+  Payment       Payment[]
 
   @@map("users")
 }
@@ -77,6 +79,7 @@ model Company {
   buses                Bus[]
   frequencies          Frequency[]
   CompanyCustomization CompanyCustomization[]
+  Payment              Payment[]
 
   @@map("companies")
 }
@@ -203,33 +206,6 @@ model RouteSheet {
   @@map("route_sheets")
 }
 
-model Ticket {
-  id            Int           @id @default(autoincrement()) @map("id")
-  passengerId   String        @map("passenger_id")
-  passengerName String        @map("passenger_name")
-  passengerType PassengerType @map("passenger_type")
-  price         Float         @map("price")
-  discount      Float         @map("discount")
-  accessCode    String        @unique @map("access_code")
-  status        String        @map("status")
-  paymentMethod PaymentMethod @map("payment_method")
-  receiptUrl    String?       @map("receipt_url")
-  createdAt     DateTime      @default(now()) @map("created_at")
-
-  routeSheetId   Int          @map("route_sheet_id")
-  routeSheet     RouteSheet   @relation(fields: [routeSheetId], references: [id])
-  physicalSeatId Int          @map("physical_seat_id")
-  physicalSeat   PhysicalSeat @relation(fields: [physicalSeatId], references: [id])
-  originId       Int          @map("origin_city_id")
-  origin         City         @relation("TicketOrigin", fields: [originId], references: [id])
-  destinationId  Int          @map("destination_city_id")
-  destination    City         @relation("TicketDestination", fields: [destinationId], references: [id])
-
-  scans TicketScan[]
-
-  @@map("tickets")
-}
-
 model TicketScan {
   id        Int      @id @default(autoincrement()) @map("id")
   ticketId  Int      @map("ticket_id")
@@ -263,4 +239,65 @@ model CompanyCustomization {
   hexcode   String
 
   @@map("company_customizations")
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REFUNDED
+}
+
+model Payment {
+  id                  Int           @id @default(autoincrement())
+  amount              Float
+  subtotal            Float
+  taxes               Float?
+  discounts           Float?
+  paymentMethod       PaymentMethod
+  status              PaymentStatus
+  receiptUrl          String?
+  paypalTransactionId String?
+  bankReference       String?
+  validatedBy         Int?
+  validatedAt         DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  isOnlinePayment     Boolean       @default(false)
+  userId              Int
+  user                User          @relation(fields: [userId], references: [id])
+  companyId           Int?
+  company             Company?      @relation(fields: [companyId], references: [id])
+  tickets             Ticket[]
+
+  @@map("payments")
+}
+
+model Ticket {
+  id             Int           @id @default(autoincrement()) @map("id")
+  passengerId    String        @map("passenger_id") // Cédula o identificación
+  passengerName  String        @map("passenger_name")
+  passengerType  PassengerType @map("passenger_type")
+  price          Float         @map("price") // Precio final (con descuentos)
+  basePrice      Float         @map("base_price") // Precio sin descuentos
+  discount       Float         @default(0) @map("discount") // Monto descontado
+  accessCode     String        @unique @map("access_code") // Para QR
+  status         String        @default("ACTIVE") @map("status") // ACTIVE, USED, CANCELLED
+  paymentMethod  PaymentMethod @map("payment_method") // Copia del método de pago
+  receiptUrl     String?       @map("receipt_url") // Comprobante individual
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  paymentId      Int?          @map("payment_id")
+  payment        Payment?      @relation(fields: [paymentId], references: [id])
+  routeSheetId   Int           @map("route_sheet_id")
+  routeSheet     RouteSheet    @relation(fields: [routeSheetId], references: [id])
+  physicalSeatId Int           @map("physical_seat_id")
+  physicalSeat   PhysicalSeat  @relation(fields: [physicalSeatId], references: [id])
+  originId       Int           @map("origin_city_id")
+  origin         City          @relation("TicketOrigin", fields: [originId], references: [id])
+  destinationId  Int           @map("destination_city_id")
+  destination    City          @relation("TicketDestination", fields: [destinationId], references: [id])
+  scans          TicketScan[]
+
+  @@map("tickets")
 }
