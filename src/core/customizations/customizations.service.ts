@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common'
 import { DisplayableException } from 'src/common/exceptions/displayable.exception'
-import { CompanyCustomizationsRepository } from './customizationRepository.service'
+import { CompanyCustomizationsRepository } from './customizations.repository'
 import { CustomizationFiltersDto } from './dto/req/customization-filters.dto'
 import { CreateCustomizationDto } from './dto/req/create-customization.dto'
 import { UpdateCustomizationDto } from './dto/req/update-customization.dto'
@@ -22,18 +22,14 @@ export class CustomizationsService {
   }
 
   async create(dto: CreateCustomizationDto) {
-    await this.validateCompanyCustomizationUniqueness({
-      companyId: dto.companyId,
-    })
-
     const entity = await this.repository.create(dto)
     return !!entity
   }
 
-  async update(id: number, dto: UpdateCustomizationDto) {
-    await this.findOne(id)
+  async update(dto: UpdateCustomizationDto) {
+    await this.findByCompanyId(dto.companyId)
 
-    const entity = await this.repository.update(id, dto)
+    const entity = await this.repository.update(dto)
     return !!entity
   }
 

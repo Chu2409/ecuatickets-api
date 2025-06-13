@@ -22,7 +22,7 @@ import { GetCompanyId } from '../auth/decorators/get-company-id.decorator'
 import { Auth } from '../auth/decorators/auth.decorator'
 import { USER_ROLE } from '../users/types/user-role.enum'
 
-@ApiTags('Buses')
+@ApiTags('Buses (COMPANY)')
 @Controller('buses')
 @ApiBearerAuth()
 @Auth(USER_ROLE.COMPANY)
@@ -41,8 +41,7 @@ export class BusesController {
 
   @Get()
   @ApiOperation({
-    summary: 'Get all buses',
-    description: 'Get all buses for a company',
+    summary: 'Get all buses (COMPANY, CLERK)',
   })
   @Auth(USER_ROLE.COMPANY, USER_ROLE.CLERK)
   @ApiPaginatedResponse(BusResDto)
@@ -56,7 +55,7 @@ export class BusesController {
 
   @Get(':id')
   @ApiOperation({
-    summary: 'Get a bus by id',
+    summary: 'Get a bus by id (COMPANY, CLERK)',
   })
   @Auth(USER_ROLE.COMPANY, USER_ROLE.CLERK)
   @ApiStandardResponse(BusResDto)

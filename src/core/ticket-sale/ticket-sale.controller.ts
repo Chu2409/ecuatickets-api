@@ -11,21 +11,23 @@ import {
 import {
   ApiTags,
   ApiOperation,
-  ApiResponse,
   ApiParam,
   ApiQuery,
+  ApiBearerAuth,
 } from '@nestjs/swagger'
 import { CounterSalesService } from './counter-sale/counter-sale.service'
 import { OnlineSalesService } from './online-sale/online-sale.service'
 import { SaleResponseDto } from './dto/res/sales-response.dto'
 import { CreateCounterSaleDto } from './counter-sale/dto/req/create-counter-sale.dto'
 import { CreateOnlineSaleDto } from './online-sale/dto/req/create-online-sale.dto'
-import { TicketResponseDto } from './dto/res/ticket-response-dto'
 import { Auth } from '../auth/decorators/auth.decorator'
 import { USER_ROLE } from '../users/types/user-role.enum'
+import { ApiStandardResponse } from 'src/common/decorators/api-standard-response.decorator'
 
-@ApiTags('Ticket Sales')
+@ApiTags('Ticket Sales (CLERK, CUSTOMER)')
 @Controller('ticket-sales')
+@ApiBearerAuth()
+@Auth(USER_ROLE.CLERK, USER_ROLE.CUSTOMER)
 export class TicketSaleController {
   constructor(
     private readonly counterSalesService: CounterSalesService,
@@ -34,27 +36,9 @@ export class TicketSaleController {
 
   @Post('counter')
   @ApiOperation({
-    summary: 'Procesar venta en ventanilla',
-    description:
-      'Permite a los oficinistas procesar ventas de boletos desde la ventanilla de la cooperativa',
+    summary: 'Process counter sale (CLERK)',
   })
-  @ApiResponse({
-    status: 201,
-    description: 'Venta procesada exitosamente',
-    type: SaleResponseDto,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Datos de venta inválidos',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Recurso no encontrado (ruta, asiento, etc.)',
-  })
-  @ApiResponse({
-    status: 409,
-    description: 'Conflicto - Asientos no disponibles',
-  })
+  @ApiStandardResponse(SaleResponseDto)
   @Auth(USER_ROLE.CLERK)
   async processCounterSale(
     @Body() createSaleDto: CreateCounterSaleDto,
@@ -64,26 +48,7 @@ export class TicketSaleController {
 
   @Post('online')
   @ApiOperation({
-    summary: 'Procesar venta online',
-    description:
-      'Permite a los clientes comprar boletos a través de la plataforma web o móvil',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Venta procesada exitosamente',
-    type: SaleResponseDto,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Datos de venta inválidos o método de pago incorrecto',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Recurso no encontrado (ruta, asiento, etc.)',
-  })
-  @ApiResponse({
-    status: 409,
-    description: 'Conflicto - Asientos no disponibles',
+    summary: 'Process online sale (CUSTOMER)',
   })
   async processOnlineSale(
     @Body() createSaleDto: CreateOnlineSaleDto,
@@ -93,26 +58,12 @@ export class TicketSaleController {
 
   @Patch('payments/:paymentId/validate')
   @ApiOperation({
-    summary: 'Validar pago pendiente',
-    description:
-      'Permite a los oficinistas validar pagos pendientes (transferencias bancarias)',
+    summary: 'Validate pending payment (CLERK)',
   })
   @ApiParam({
     name: 'paymentId',
     description: 'ID del pago a validar',
     type: 'number',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Pago validado exitosamente',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Pago no encontrado',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'El pago no está pendiente de validación',
   })
   @Auth(USER_ROLE.CLERK)
   async validatePayment(
@@ -125,25 +76,12 @@ export class TicketSaleController {
 
   @Patch('payments/:paymentId/reject')
   @ApiOperation({
-    summary: 'Rechazar pago pendiente',
-    description: 'Permite a los oficinistas rechazar pagos pendientes',
+    summary: 'Reject pending payment (CLERK)',
   })
   @ApiParam({
     name: 'paymentId',
     description: 'ID del pago a rechazar',
     type: 'number',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Pago rechazado exitosamente',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Pago no encontrado',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'El pago no está pendiente de validación',
   })
   @Auth(USER_ROLE.CLERK)
   async rejectPayment(
@@ -156,9 +94,7 @@ export class TicketSaleController {
 
   @Get('customers/:customerId/tickets')
   @ApiOperation({
-    summary: 'Obtener boletos del cliente',
-    description:
-      'Permite a los clientes consultar su historial de boletos comprados',
+    summary: 'Get customer tickets (CUSTOMER)',
   })
   @ApiParam({
     name: 'customerId',
@@ -177,15 +113,6 @@ export class TicketSaleController {
     type: 'number',
     required: false,
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de boletos del cliente',
-    type: [TicketResponseDto],
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Cliente no encontrado',
-  })
   async getCustomerTickets(
     @Param('customerId', ParseIntPipe) customerId: number,
     @Query('limit') limit: number = 10,
@@ -200,23 +127,12 @@ export class TicketSaleController {
 
   @Get('tickets/:accessCode/customer/:customerId')
   @ApiOperation({
-    summary: 'Obtener boleto por código de acceso',
-    description:
-      'Permite obtener un boleto específico usando su código de acceso',
+    summary: 'Get ticket by access code (CUSTOMER)',
   })
   @ApiParam({
     name: 'accessCode',
     description: 'Código de acceso del boleto',
     type: 'string',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Información detallada del boleto',
-    type: TicketResponseDto,
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Boleto no encontrado',
   })
   async getTicketByAccessCode(@Param('accessCode') accessCode: string) {
     return await this.onlineSalesService.getTicketByAccessCode(accessCode)
