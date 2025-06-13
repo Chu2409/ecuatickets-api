@@ -58,4 +58,18 @@ export const MOCK_USERS: Record<USER_ROLE, BaseUserResDto> = {
     createdAt: new Date(),
     updatedAt: new Date(),
   },
+  [USER_ROLE.ADMIN]: {
+    id: 5,
+    username: 'admin',
+    password: '123456',
+    dni: '0703224317',
+    email: 'admin@gmail.com',
+    name: 'Admin',
+    surname: 'Admin',
+    role: USER_ROLE.ADMIN,
+    isActive: true,
+    companyId: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 }

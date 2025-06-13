@@ -44,4 +44,13 @@ export const users: Prisma.UserCreateManyInput[] = [
     surname: 'López',
     role: USER_ROLE.CUSTOMER,
   },
+  {
+    username: 'admin',
+    password,
+    dni: '0703224317',
+    email: 'admin@gmail.com',
+    name: 'Admin',
+    surname: 'Admin',
+    role: USER_ROLE.ADMIN,
+  },
 ]

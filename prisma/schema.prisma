@@ -41,6 +41,7 @@ enum UserRole {
   CLERK
   CUSTOMER
   DRIVER
+  ADMIN
 }
 
 model User {
