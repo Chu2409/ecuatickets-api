@@ -23,10 +23,12 @@ export class RoleAuthGuard implements CanActivate {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
-    const validRoles: string[] = this.reflector.get(
-      META_ROLES,
-      context.getHandler(),
-    )
+    // Get roles from both method and class level
+    const methodRoles = this.reflector.get(META_ROLES, context.getHandler())
+    const classRoles = this.reflector.get(META_ROLES, context.getClass())
+
+    // Use method roles if they exist, otherwise fall back to class roles
+    const validRoles = methodRoles?.length > 0 ? methodRoles : classRoles
 
     if (!validRoles) return true
     if (validRoles.length === 0) return true

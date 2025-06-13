@@ -15,6 +15,7 @@ import { Auth } from './decorators/auth.decorator'
 import { GetUser } from './decorators/get-user.decorator'
 import { User } from '@prisma/client'
 import { USER_ROLE } from '../users/types/user-role.enum'
+import { BaseUserResDto } from '../users/dto/res/user.dto'
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -36,6 +37,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Get Me',
   })
+  @ApiStandardResponse(BaseUserResDto, HttpStatus.OK)
   @Auth(USER_ROLE.CUSTOMER)
   getMe(@GetUser() user: User) {
     return user
