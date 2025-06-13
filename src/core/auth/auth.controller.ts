@@ -36,7 +36,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Get Me',
   })
-  @Auth(USER_ROLE.COMPANY)
+  @Auth(USER_ROLE.CUSTOMER)
   getMe(@GetUser() user: User) {
     return user
   }

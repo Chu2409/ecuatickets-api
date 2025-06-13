@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
+import { CustomConfigService } from 'src/global/config/config.service'
 import * as path from 'path'
 import * as fs from 'fs/promises'
 import { v4 as uuidv4 } from 'uuid'
@@ -16,12 +16,9 @@ export class FileUploadService {
   ]
   private readonly maxFileSize = 5 * 1024 * 1024
 
-  constructor(private configService: ConfigService) {
-    this.uploadPath = this.configService.get('UPLOAD_PATH', './uploads/images')
-    this.baseUrl = this.configService.get(
-      'BASE_URL',
-      'http://localhost:' + process.env.PORT,
-    )
+  constructor(private configService: CustomConfigService) {
+    this.uploadPath = this.configService.env.UPLOAD_PATH
+    this.baseUrl = this.configService.env.BASE_URL
     this.ensureUploadDirectory()
   }
 
@@ -39,7 +36,7 @@ export class FileUploadService {
       await fs.writeFile(filePath, file.buffer)
       return `${this.baseUrl}/uploads/images/${fileName}`
     } catch (error) {
-      throw new BadRequestException('Error al guardar el archivoz')
+      throw new BadRequestException('Error al guardar el archivo')
     }
   }
 
