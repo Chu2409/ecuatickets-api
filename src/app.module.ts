@@ -10,6 +10,7 @@ import { BusesModule } from './core/buses/buses.module'
 import { CustomizationsModule } from './core/customizations/customizations.module'
 import { EmailModule } from './core/email/email.module'
 import { TicketSaleModule } from './core/ticket-sale/ticket-sale.module'
+import { PaypalModule } from './core/paypal/paypal.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { TicketSaleModule } from './core/ticket-sale/ticket-sale.module'
     CustomizationsModule,
     EmailModule,
     TicketSaleModule,
+    PaypalModule,
   ],
   providers: [ResponseInterceptor],
 })
