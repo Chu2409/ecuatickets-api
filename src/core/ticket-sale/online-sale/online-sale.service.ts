@@ -10,12 +10,14 @@ import { TicketSaleRepository } from '../ticket-sale.repository'
 import { CreateOnlineSaleDto } from './dto/req/create-online-sale.dto'
 import { SaleResponseDto } from '../dto/res/sales-response.dto'
 import { EmailService } from 'src/core/email/email.service'
+import { PayPalService } from 'src/core/paypal/paypal.service'
 
 @Injectable()
 export class OnlineSalesService {
   constructor(
     private readonly ticketSaleRepository: TicketSaleRepository,
     private readonly mailService: EmailService,
+    private readonly payPalService: PayPalService,
   ) {}
 
   async processOnlineSale(
