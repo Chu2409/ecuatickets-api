@@ -7,6 +7,7 @@ import { EmailService } from '../email/email.service'
 import { QrModule } from './qr/qr.module'
 import { PurchaseHistoryModule } from './purchase-history/purchase-history.module'
 import { PayPalService } from '../paypal/paypal.service'
+import { TicketSaleService } from './ticket-sale.service'
 
 @Module({
   imports: [QrModule, PurchaseHistoryModule],
@@ -17,6 +18,7 @@ import { PayPalService } from '../paypal/paypal.service'
     TicketSaleRepository,
     EmailService,
     PayPalService,
+    TicketSaleService,
   ],
   exports: [QrModule, PurchaseHistoryModule],
 })

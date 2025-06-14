@@ -1,247 +1,121 @@
 import {
   Injectable,
-  BadRequestException,
   NotFoundException,
   ConflictException,
 } from '@nestjs/common'
-import {
-  PassengerType,
-  PaymentMethod,
-  PaymentStatus,
-  User,
-} from '@prisma/client'
+import { PassengerType, Prisma } from '@prisma/client'
 import { v4 as uuidv4 } from 'uuid'
-import { TicketSaleRepository } from '../ticket-sale.repository'
+import { TicketData, TicketSaleRepository } from '../ticket-sale.repository'
 import { CreateCounterSaleDto } from './dto/req/create-counter-sale.dto'
-import { SaleResponseDto } from '../dto/res/sales-response.dto'
-import { EmailService } from 'src/core/email/email.service'
+import { TICKET_STATUS } from '../types/ticket-status'
+import { TicketInfoDtoReq } from '../dto/req/ticket-info.dto'
+import { PAYMENT_STATUS } from '../types/payment-status'
 
 @Injectable()
 export class CounterSalesService {
-  constructor(
-    private readonly ticketSaleRepository: TicketSaleRepository,
-    private readonly emailService: EmailService,
-  ) {}
+  constructor(private readonly ticketSaleRepository: TicketSaleRepository) {}
 
-  async processCounterSale(
-    createSaleDto: CreateCounterSaleDto,
-  ): Promise<SaleResponseDto> {
-    const clientData = await this.validateSaleData(createSaleDto)
+  public async processCounterSale(dto: CreateCounterSaleDto) {
+    const ticketsData = await this.prepareTicketsData(dto.tickets)
+    const paymentData = this.preparePaymentData(ticketsData, dto)
 
-    const seatIds = createSaleDto.passengers.map((p) => p.physicalSeatId)
-    const occupiedSeats = await this.ticketSaleRepository.checkSeatAvailability(
-      createSaleDto.routeSheetId,
-      seatIds,
-      createSaleDto.originId,
-      createSaleDto.destinationId,
-    )
+    await this.ticketSaleRepository.createPayment(ticketsData, paymentData)
 
-    if (occupiedSeats.length > 0) {
-      throw new ConflictException(
-        `Los siguientes asientos no están disponibles: ${occupiedSeats.join(', ')}`,
-      )
+    if (paymentData.status === PAYMENT_STATUS.APPROVED) {
+      const physicalSeats = ticketsData.map((ticket) => ticket.physicalSeatId)
+      await this.ticketSaleRepository.updatePhysicalSeatsStatus(physicalSeats)
     }
+  }
 
-    const ticketsData = await this.prepareTicketsData(createSaleDto)
-    const totals = this.calculateTotals(ticketsData)
-
-    const paymentData = {
-      amount: totals.amount,
-      subtotal: totals.subtotal,
-      taxes: totals.taxes,
-      discounts: totals.discounts,
-      paymentMethod: createSaleDto.paymentMethod,
-      status: PaymentStatus.APPROVED,
-      bankReference: createSaleDto.bankReference,
-      isOnlinePayment: false,
-      user: { connect: { id: createSaleDto.clerkId } },
-      company: { connect: { id: createSaleDto.companyId } },
-    }
-
-    const result = await this.ticketSaleRepository.createPaymentWithTickets(
-      paymentData,
-      ticketsData,
+  private preparePaymentData(
+    tickets: TicketData[],
+    dto: CreateCounterSaleDto,
+  ): Prisma.PaymentCreateManyInput {
+    const subtotal = tickets.reduce((acc, ticket) => acc + ticket.price, 0)
+    const discounts = tickets.reduce(
+      (acc, ticket) => acc + (ticket.discount ?? 0),
+      0,
     )
-
-    await this.emailService.sendEmail(
-      clientData.email,
-      result.payment.amount,
-      result.payment.updatedAt
-        ? result.payment.updatedAt.toISOString()
-        : 'Fecha no disponible',
-    )
+    const total = subtotal - discounts
 
     return {
-      payment: {
-        id: result.payment.id,
-        amount: result.payment.amount,
-        subtotal: result.payment.subtotal,
-        taxes: result.payment.taxes || 0,
-        discounts: result.payment.discounts || 0,
-        paymentMethod: result.payment.paymentMethod,
-        status: result.payment.status,
-        receiptUrl: result.payment.receiptUrl ?? undefined,
-        isOnlinePayment: result.payment.isOnlinePayment,
-        createdAt: result.payment.createdAt,
-        tickets: result.payment.tickets.map((ticket) => ({
-          id: ticket.id,
-          passengerId: ticket.passengerId,
-          passengerName: ticket.passengerName,
-          passengerType: ticket.passengerType,
-          price: ticket.price,
-          basePrice: ticket.basePrice,
-          discount: ticket.discount,
-          accessCode: ticket.accessCode,
-          status: ticket.status,
-          receiptUrl: ticket.receiptUrl ?? undefined,
-          createdAt: ticket.createdAt,
-          origin: {
-            id: ticket.origin.id,
-            name: ticket.origin.name,
-            province: ticket.origin.province,
-          },
-          destination: {
-            id: ticket.destination.id,
-            name: ticket.destination.name,
-            province: ticket.destination.province,
-          },
-          physicalSeat: {
-            id: ticket.physicalSeat.id,
-            seatNumber: ticket.physicalSeat.seatNumber,
-            seatType: {
-              name: ticket.physicalSeat.seatType.name,
-              description: ticket.physicalSeat.seatType.description || '',
-            },
-          },
-        })),
-      },
-      message: 'Venta procesada exitosamente en ventanilla',
-      totalTickets: ticketsData.length,
+      paymentMethod: dto.paymentMethod,
+      bankReference: dto.bankReference,
+      userId: dto.userId,
+      status: dto.paymentStatus,
+      subtotal,
+      total,
+      discounts,
     }
   }
 
-  private async validateSaleData(
-    createSaleDto: CreateCounterSaleDto,
-  ): Promise<User> {
-    const routeSheet = await this.ticketSaleRepository.findRouteSheetById(
-      createSaleDto.routeSheetId,
-    )
-    if (!routeSheet) {
-      throw new NotFoundException('Hoja de ruta no encontrada')
-    }
+  private async prepareTicketsData(dto: TicketInfoDtoReq[]) {
+    const ticketsData: TicketData[] = []
 
-    if (routeSheet.status !== 'GENERATED') {
-      throw new BadRequestException(
-        'La hoja de ruta no está disponible para ventas',
-      )
-    }
-
-    const clerk = await this.ticketSaleRepository.findUserById(
-      createSaleDto.clerkId,
-    )
-    if (!clerk || clerk.role !== 'CLERK') {
-      throw new NotFoundException('Oficinista no encontrado o no válido')
-    }
-
-    const company = await this.ticketSaleRepository.findCompanyById(
-      createSaleDto.companyId,
-    )
-    if (!company || !company.isActive) {
-      throw new NotFoundException('Cooperativa no encontrada o inactiva')
-    }
-
-    const origin = await this.ticketSaleRepository.findCityById(
-      createSaleDto.originId,
-    )
-    const destination = await this.ticketSaleRepository.findCityById(
-      createSaleDto.destinationId,
-    )
-
-    if (!origin || !destination) {
-      throw new NotFoundException('Ciudad de origen o destino no encontrada')
-    }
-
-    if (createSaleDto.originId === createSaleDto.destinationId) {
-      throw new BadRequestException(
-        'La ciudad de origen no puede ser igual a la de destino',
-      )
-    }
-
-    for (const passenger of createSaleDto.passengers) {
-      const seat = await this.ticketSaleRepository.findPhysicalSeatById(
-        passenger.physicalSeatId,
-      )
-      if (!seat) {
+    for (const ticket of dto) {
+      const frequencySegmentPrice =
+        await this.ticketSaleRepository.findFrequencySegmentPriceById(
+          ticket.frecuencySegmentPriceId,
+        )
+      if (!frequencySegmentPrice) {
         throw new NotFoundException(
-          `Asiento con ID ${passenger.physicalSeatId} no encontrado`,
+          `Segmento de frecuencia con ID ${ticket.frecuencySegmentPriceId} no encontrado`,
         )
       }
-      if (seat.busId !== routeSheet.busId) {
-        throw new BadRequestException(
-          `El asiento ${seat.seatNumber} no pertenece al bus de esta ruta`,
-        )
-      }
-    }
 
-    return clerk
-  }
-
-  private async prepareTicketsData(createSaleDto: CreateCounterSaleDto) {
-    const ticketsData: Array<{
-      passengerId: string
-      passengerName: string
-      passengerType: PassengerType
-      price: number
-      basePrice: number
-      discount: number
-      accessCode: string
-      status: string
-      paymentMethod: PaymentMethod
-      routeSheetId: number
-      physicalSeatId: number
-      originId: number
-      destinationId: number
-    }> = []
-
-    for (const passenger of createSaleDto.passengers) {
-      const seat = await this.ticketSaleRepository.findPhysicalSeatById(
-        passenger.physicalSeatId,
+      const physicalSeat = await this.ticketSaleRepository.findSeatById(
+        ticket.physicalSeatId,
       )
+      if (!physicalSeat || physicalSeat.isTaken) {
+        throw new ConflictException(
+          `El asiento ${ticket.physicalSeatId} no está disponible para este segmento`,
+        )
+      }
 
-      if (!seat) {
+      const frequency = await this.ticketSaleRepository.findFrequencyById(
+        ticket.frecuencySegmentPriceId,
+      )
+      if (!frequency) {
         throw new NotFoundException(
-          `Asiento con ID ${passenger.physicalSeatId} no encontrado`,
+          `Frecuencia con ID ${ticket.frecuencySegmentPriceId} no encontrada`,
         )
       }
 
-      const basePrice =
-        await this.ticketSaleRepository.calculateBasePriceBetweenCities(
-          createSaleDto.routeSheetId,
-          createSaleDto.originId,
-          createSaleDto.destinationId,
-          seat.seatTypeId,
-        )
-
-      const discount = this.calculateDiscount(
-        basePrice,
-        passenger.passengerType,
+      const routeSheet = await this.ticketSaleRepository.findRouteSheet(
+        frequency.id,
+        ticket.date,
       )
-      const finalPrice = basePrice - discount
+      if (!routeSheet) {
+        throw new NotFoundException(
+          `Precio de segmento con ID ${ticket.frecuencySegmentPriceId} no encontrado`,
+        )
+      }
+
+      // 4. Calcular precios
+      const price =
+        frequencySegmentPrice.price * physicalSeat.seatType.valueToApply
+      const discount = this.calculateDiscount(price, ticket.passengerType)
+      const finalPrice = price - discount
 
       ticketsData.push({
-        passengerId: passenger.passengerId,
-        passengerName: passenger.passengerName,
-        passengerType: passenger.passengerType,
+        passengerId: ticket.passengerId,
+        passengerType: ticket.passengerType,
+        passenger: {
+          dni: ticket.passsengerDni,
+          name: ticket.passengerName,
+          surname: ticket.passengerSurname,
+          email: ticket.passengerEmail,
+          birthDate: ticket.passengerBirthDate,
+        },
         price: finalPrice,
-        basePrice,
+        basePrice: frequencySegmentPrice.price,
         discount,
         accessCode: this.generateAccessCode(),
-        status: 'ACTIVE',
-        paymentMethod: createSaleDto.paymentMethod,
-        routeSheetId: createSaleDto.routeSheetId,
-        physicalSeatId: passenger.physicalSeatId,
-        originId: createSaleDto.originId,
-        destinationId: createSaleDto.destinationId,
+        routeSheetId: routeSheet.id,
+        physicalSeatId: ticket.physicalSeatId,
+        originId: frequencySegmentPrice.originId,
+        destinationId: frequencySegmentPrice.destinationId,
+        status: TICKET_STATUS.ACTIVE,
       })
     }
 
@@ -265,78 +139,7 @@ export class CounterSalesService {
     }
   }
 
-  private calculateTotals(
-    ticketsData: Array<{
-      basePrice: number
-      discount: number
-    }>,
-  ) {
-    const subtotal = ticketsData.reduce(
-      (sum, ticket) => sum + ticket.basePrice,
-      0,
-    )
-    const discounts = ticketsData.reduce(
-      (sum, ticket) => sum + ticket.discount,
-      0,
-    )
-    const taxes = (subtotal - discounts) * 0.15 // 15% IVA
-    const amount = subtotal - discounts + taxes
-
-    return {
-      subtotal,
-      discounts,
-      taxes,
-      amount,
-    }
-  }
-
   private generateAccessCode(): string {
     return uuidv4().replace(/-/g, '').substring(0, 12).toUpperCase()
-  }
-
-  async validatePayment(paymentId: number, clerkId: number): Promise<void> {
-    const payment = await this.ticketSaleRepository.findPaymentById(paymentId)
-
-    if (!payment) {
-      throw new NotFoundException('Pago no encontrado')
-    }
-
-    if (payment.status !== PaymentStatus.PENDING) {
-      throw new BadRequestException('El pago no está pendiente de validación')
-    }
-
-    const user = await this.ticketSaleRepository.updatePaymentStatus(
-      paymentId,
-      PaymentStatus.APPROVED,
-      clerkId,
-    )
-
-    if (user && user.email) {
-      await this.emailService.sendEmail(
-        user.email,
-        payment.amount,
-        payment.updatedAt
-          ? payment.updatedAt.toISOString()
-          : 'Fecha no disponible',
-      )
-    }
-  }
-
-  async rejectPayment(paymentId: number, clerkId: number): Promise<void> {
-    const payment = await this.ticketSaleRepository.findPaymentById(paymentId)
-
-    if (!payment) {
-      throw new NotFoundException('Pago no encontrado')
-    }
-
-    if (payment.status !== PaymentStatus.PENDING) {
-      throw new BadRequestException('El pago no está pendiente de validación')
-    }
-
-    await this.ticketSaleRepository.updatePaymentStatus(
-      paymentId,
-      PaymentStatus.REJECTED,
-      clerkId,
-    )
   }
 }

@@ -1,15 +1,16 @@
 import { Injectable } from '@nestjs/common'
 import * as checkoutNodeJSSdk from '@paypal/checkout-server-sdk'
+import { CustomConfigService } from 'src/global/config/config.service'
 
 @Injectable()
 export class PayPalService {
   private environment: checkoutNodeJSSdk.core.SandboxEnvironment
   private client: checkoutNodeJSSdk.core.PayPalHttpClient
 
-  constructor() {
+  constructor(private readonly configService: CustomConfigService) {
     this.environment = new checkoutNodeJSSdk.core.SandboxEnvironment(
-      process.env.PAYPAL_CLIENT_ID,
-      process.env.PAYPAL_SECRET,
+      this.configService.env.PAYPAL_CLIENT_ID,
+      this.configService.env.PAYPAL_SECRET,
     )
     this.client = new checkoutNodeJSSdk.core.PayPalHttpClient(this.environment)
   }

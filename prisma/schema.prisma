@@ -332,8 +332,8 @@ model Ticket {
 
   passengerId    Int          @map("passenger_id")
   passenger      Person       @relation(fields: [passengerId], references: [id])
-  paymentId      Int?         @map("payment_id")
-  payment        Payment?     @relation(fields: [paymentId], references: [id])
+  paymentId      Int          @map("payment_id")
+  payment        Payment      @relation(fields: [paymentId], references: [id])
   routeSheetId   Int          @map("route_sheet_id")
   routeSheet     RouteSheet   @relation(fields: [routeSheetId], references: [id])
   physicalSeatId Int          @map("physical_seat_id")

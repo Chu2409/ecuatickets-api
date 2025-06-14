@@ -1,41 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { PaymentMethod } from '@prisma/client'
 import { Type } from 'class-transformer'
 import {
   IsArray,
   IsEnum,
-  IsNumber,
   IsOptional,
   IsString,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator'
-import { PassengerInfoDto } from 'src/core/ticket-sale/dto/req/passenger-info.dto'
+import { TicketInfoDtoReq } from 'src/core/ticket-sale/dto/req/ticket-info.dto'
+import { PAYMENT_METHOD } from 'src/core/ticket-sale/types/payment-method'
 
 export class CreateOnlineSaleDto {
-  @ApiProperty({ description: 'ID de la hoja de ruta' })
-  @IsNumber()
-  routeSheetId: number
-
-  @ApiProperty({ description: 'Ciudad de origen' })
-  @IsNumber()
-  originId: number
-
-  @ApiProperty({ description: 'Ciudad de destino' })
-  @IsNumber()
-  destinationId: number
-
-  @ApiProperty({
-    type: [PassengerInfoDto],
-    description: 'Información de los pasajeros',
-  })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => PassengerInfoDto)
-  passengers: PassengerInfoDto[]
-
-  @ApiProperty({ enum: PaymentMethod, description: 'Método de pago' })
-  @IsEnum(PaymentMethod)
-  paymentMethod: PaymentMethod
+  @ApiProperty({ enum: PAYMENT_METHOD, description: 'Payment method' })
+  @IsEnum(PAYMENT_METHOD)
+  paymentMethod: PAYMENT_METHOD
 
   @ApiPropertyOptional({ description: 'ID de transacción de PayPal' })
   @IsOptional()
@@ -54,7 +33,15 @@ export class CreateOnlineSaleDto {
   @IsString()
   receiptUrl?: string
 
-  @ApiProperty({ description: 'ID del usuario cliente' })
-  @IsNumber()
-  customerId: number
+  @ValidateIf(() => false)
+  userId: number
+
+  @ApiProperty({
+    type: [TicketInfoDtoReq],
+    description: 'Tickets info',
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TicketInfoDtoReq)
+  tickets: TicketInfoDtoReq[]
 }
