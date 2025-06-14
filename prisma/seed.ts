@@ -9,12 +9,17 @@ import { seatConfigurations } from './data/seatConfigurations'
 import { physicalSeats } from './data/physicalSeats'
 import { frequencies } from './data/frecuencies'
 import { routeSheets } from './data/route-sheets'
+import { people } from './data/people'
 
 const prisma = new PrismaClient()
 
 const main = async () => {
   await prisma.company.createMany({
     data: companies,
+  })
+
+  await prisma.person.createMany({
+    data: people,
   })
 
   await prisma.user.createMany({
