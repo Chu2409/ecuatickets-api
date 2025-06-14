@@ -4,321 +4,148 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common'
-import { PassengerType, PaymentMethod, PaymentStatus } from '@prisma/client'
+import { PassengerType, Prisma } from '@prisma/client'
 import { v4 as uuidv4 } from 'uuid'
 import { TicketSaleRepository } from '../ticket-sale.repository'
 import { CreateOnlineSaleDto } from './dto/req/create-online-sale.dto'
-import { SaleResponseDto } from '../dto/res/sales-response.dto'
 import { EmailService } from 'src/core/email/email.service'
+import { PayPalService } from 'src/core/paypal/paypal.service'
+import { TICKET_STATUS } from '../types/ticket-status'
+import { TicketData } from '../ticket-sale.repository'
+import { PAYMENT_STATUS } from '../types/payment-status'
+import { PAYMENT_METHOD } from '../types/payment-method'
+import { TicketInfoDtoReq } from '../dto/req/ticket-info.dto'
 
 @Injectable()
 export class OnlineSalesService {
   constructor(
     private readonly ticketSaleRepository: TicketSaleRepository,
-    private readonly mailService: EmailService,
+    private readonly emailService: EmailService,
+    private readonly paypalService: PayPalService,
   ) {}
 
-  async processOnlineSale(
-    createSaleDto: CreateOnlineSaleDto,
-  ): Promise<SaleResponseDto> {
-    await this.validateSaleData(createSaleDto)
+  public async processOnlineSale(dto: CreateOnlineSaleDto) {
+    // Verify payment based on payment method
+    this.verifyPaymentType(dto)
 
-    // 2. Verificar disponibilidad de asientos
-    const seatIds = createSaleDto.passengers.map((p) => p.physicalSeatId)
-    const occupiedSeats = await this.ticketSaleRepository.checkSeatAvailability(
-      createSaleDto.routeSheetId,
-      seatIds,
-      createSaleDto.originId,
-      createSaleDto.destinationId,
-    )
+    const ticketsData = await this.prepareTicketsData(dto.tickets)
+    const paymentData = this.preparePaymentData(ticketsData, dto)
 
-    if (occupiedSeats.length > 0) {
-      throw new ConflictException(
-        `Los siguientes asientos no están disponibles: ${occupiedSeats.join(', ')}`,
-      )
+    await this.ticketSaleRepository.createPayment(ticketsData, paymentData)
+  }
+
+  private verifyPaymentType(dto: CreateOnlineSaleDto) {
+    switch (dto.paymentMethod) {
+      case PAYMENT_METHOD.PAYPAL:
+        if (!dto.paypalTransactionId) {
+          throw new BadRequestException('PayPal transaction ID is required')
+        }
+        // await this.paypalService.captureOrder(dto.paypalTransactionId)
+        break
+      case PAYMENT_METHOD.TRANSFER:
+        if (!dto.bankReference || !dto.receiptUrl) {
+          throw new BadRequestException(
+            'Bank reference and receipt URL are required for bank transfers',
+          )
+        }
+        // Here you could add additional verification for bank transfers
+        break
+      default:
+        throw new BadRequestException('Invalid payment method for online sales')
     }
+  }
 
-    // 3. Calcular precios y crear estructura de datos
-    const ticketsData = await this.prepareTicketsData(createSaleDto)
-    const totals = this.calculateTotals(ticketsData)
-
-    // 4. Determinar estado inicial del pago según método
-    const paymentStatus = this.getInitialPaymentStatus(
-      createSaleDto.paymentMethod,
+  private preparePaymentData(
+    tickets: TicketData[],
+    dto: CreateOnlineSaleDto,
+  ): Prisma.PaymentCreateManyInput {
+    const subtotal = tickets.reduce((acc, ticket) => acc + ticket.price, 0)
+    const discounts = tickets.reduce(
+      (acc, ticket) => acc + (ticket.discount ?? 0),
+      0,
     )
-
-    const paymentData = {
-      amount: totals.amount,
-      subtotal: totals.subtotal,
-      taxes: totals.taxes,
-      discounts: totals.discounts,
-      paymentMethod: createSaleDto.paymentMethod,
-      status: paymentStatus,
-      paypalTransactionId: createSaleDto.paypalTransactionId,
-      bankReference: createSaleDto.bankReference,
-      receiptUrl: createSaleDto.receiptUrl,
-      isOnlinePayment: true,
-      user: { connect: { id: createSaleDto.customerId } },
-    }
-
-    const result = await this.ticketSaleRepository.createPaymentWithTickets(
-      paymentData,
-      ticketsData,
-    )
-
-    if (result.payment.status === PaymentStatus.APPROVED) {
-      const customer = await this.ticketSaleRepository.findUserById(
-        createSaleDto.customerId,
-      )
-
-      if (customer?.email) {
-        await this.mailService.sendEmail(
-          customer.email,
-          paymentData.amount,
-          result.payment.updatedAt.toISOString(),
-        )
-      }
-    }
+    const total = subtotal - discounts
 
     return {
-      payment: {
-        id: result.payment.id,
-        amount: result.payment.amount,
-        subtotal: result.payment.subtotal,
-        taxes: result.payment.taxes || 0,
-        discounts: result.payment.discounts || 0,
-        paymentMethod: result.payment.paymentMethod,
-        status: result.payment.status,
-        receiptUrl: result.payment.receiptUrl ?? undefined,
-        isOnlinePayment: result.payment.isOnlinePayment,
-        createdAt: result.payment.createdAt,
-        tickets: result.payment.tickets.map((ticket) => ({
-          id: ticket.id,
-          passengerId: ticket.passengerId,
-          passengerName: ticket.passengerName,
-          passengerType: ticket.passengerType,
-          price: ticket.price,
-          basePrice: ticket.basePrice,
-          discount: ticket.discount,
-          accessCode: ticket.accessCode,
-          status: ticket.status,
-          receiptUrl: ticket.receiptUrl ?? undefined,
-          createdAt: ticket.createdAt,
-          origin: {
-            id: ticket.origin.id,
-            name: ticket.origin.name,
-            province: ticket.origin.province,
-          },
-          destination: {
-            id: ticket.destination.id,
-            name: ticket.destination.name,
-            province: ticket.destination.province,
-          },
-          physicalSeat: {
-            id: ticket.physicalSeat.id,
-            seatNumber: ticket.physicalSeat.seatNumber,
-            seatType: {
-              name: ticket.physicalSeat.seatType.name,
-              description: ticket.physicalSeat.seatType.description || '',
-            },
-          },
-        })),
-      },
-      message: this.getResponseMessage(paymentStatus),
-      totalTickets: ticketsData.length,
+      paymentMethod: dto.paymentMethod,
+      bankReference: dto.bankReference,
+      paypalTransactionId: dto.paypalTransactionId,
+      receiptUrl: dto.receiptUrl,
+      status: PAYMENT_STATUS.PENDING, // Online sales are pre-verified
+      subtotal,
+      total,
+      discounts,
+      userId: dto.userId,
+      isOnlinePayment: true,
     }
   }
 
-  private async validateSaleData(
-    createSaleDto: CreateOnlineSaleDto,
-  ): Promise<void> {
-    const routeSheet = await this.ticketSaleRepository.findRouteSheetById(
-      createSaleDto.routeSheetId,
-    )
-    if (!routeSheet) {
-      throw new NotFoundException('Hoja de ruta no encontrada')
-    }
+  private async prepareTicketsData(dto: TicketInfoDtoReq[]) {
+    const ticketsData: TicketData[] = []
 
-    if (routeSheet.status !== 'GENERATED') {
-      throw new BadRequestException(
-        'La hoja de ruta no está disponible para ventas',
-      )
-    }
-
-    const customer = await this.ticketSaleRepository.findUserById(
-      createSaleDto.customerId,
-    )
-    if (!customer || customer.role !== 'CUSTOMER') {
-      throw new NotFoundException('Cliente no encontrado o no válido')
-    }
-
-    const origin = await this.ticketSaleRepository.findCityById(
-      createSaleDto.originId,
-    )
-    const destination = await this.ticketSaleRepository.findCityById(
-      createSaleDto.destinationId,
-    )
-
-    if (!origin || !destination) {
-      throw new NotFoundException('Ciudad de origen o destino no encontrada')
-    }
-
-    if (createSaleDto.originId === createSaleDto.destinationId) {
-      throw new BadRequestException(
-        'La ciudad de origen no puede ser igual a la de destino',
-      )
-    }
-
-    for (const passenger of createSaleDto.passengers) {
-      const seat = await this.ticketSaleRepository.findPhysicalSeatById(
-        passenger.physicalSeatId,
-      )
-      if (!seat) {
+    for (const ticket of dto) {
+      const frequencySegmentPrice =
+        await this.ticketSaleRepository.findFrequencySegmentPriceById(
+          ticket.frecuencySegmentPriceId,
+        )
+      if (!frequencySegmentPrice) {
         throw new NotFoundException(
-          `Asiento con ID ${passenger.physicalSeatId} no encontrado`,
+          `Segmento de frecuencia con ID ${ticket.frecuencySegmentPriceId} no encontrado`,
         )
       }
-      if (seat.busId !== routeSheet.busId) {
-        throw new BadRequestException(
-          `El asiento ${seat.seatNumber} no pertenece al bus de esta ruta`,
-        )
-      }
-    }
 
-    this.validatePaymentMethodData(createSaleDto)
-
-    this.validatePassengerIdentifications(createSaleDto.passengers)
-  }
-
-  private validatePaymentMethodData(createSaleDto: CreateOnlineSaleDto): void {
-    switch (createSaleDto.paymentMethod) {
-      case PaymentMethod.PAYPAL:
-        if (!createSaleDto.paypalTransactionId) {
-          throw new BadRequestException(
-            'ID de transacción de PayPal es requerido',
-          )
-        }
-        break
-      case PaymentMethod.TRANSFER:
-        if (!createSaleDto.bankReference) {
-          throw new BadRequestException(
-            'Referencia bancaria es requerida para transferencias',
-          )
-        }
-        if (!createSaleDto.receiptUrl) {
-          throw new BadRequestException(
-            'Comprobante de pago es requerido para transferencias',
-          )
-        }
-        break
-      case PaymentMethod.CASH:
-        throw new BadRequestException(
-          'Pago en efectivo no está disponible para ventas online',
-        )
-    }
-  }
-
-  private validatePassengerIdentifications(
-    passengers: {
-      passengerId: string
-      passengerName: string
-      passengerType: PassengerType
-      physicalSeatId: number
-    }[],
-  ): void {
-    for (const passenger of passengers) {
-      if (passenger.passengerType === PassengerType.MINOR) {
-        // Validar que la cédula corresponde a un menor de edad
-        const age = this.calculateAgeFromId(passenger.passengerId)
-        if (age >= 18) {
-          throw new BadRequestException(
-            `La identificación ${passenger.passengerId} no corresponde a un menor de edad`,
-          )
-        }
-      }
-    }
-  }
-
-  private calculateAgeFromId(dni: string): number {
-    if (dni.length !== 10) return 0
-
-    const year = parseInt(dni.substring(4, 6))
-    const month = parseInt(dni.substring(2, 4))
-    const day = parseInt(dni.substring(0, 2))
-
-    const fullYear = year + (year > 50 ? 1900 : 2000)
-    const birthDate = new Date(fullYear, month - 1, day)
-    const today = new Date()
-
-    let age = today.getFullYear() - birthDate.getFullYear()
-    const monthDiff = today.getMonth() - birthDate.getMonth()
-
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birthDate.getDate())
-    ) {
-      age--
-    }
-
-    return age
-  }
-
-  private async prepareTicketsData(createSaleDto: CreateOnlineSaleDto) {
-    const ticketsData: Array<{
-      passengerId: string
-      passengerName: string
-      passengerType: PassengerType
-      price: number
-      basePrice: number
-      discount: number
-      accessCode: string
-      status: string
-      paymentMethod: PaymentMethod
-      routeSheetId: number
-      physicalSeatId: number
-      originId: number
-      destinationId: number
-    }> = []
-
-    for (const passenger of createSaleDto.passengers) {
-      const seat = await this.ticketSaleRepository.findPhysicalSeatById(
-        passenger.physicalSeatId,
+      const physicalSeat = await this.ticketSaleRepository.findSeatById(
+        ticket.physicalSeatId,
       )
+      if (!physicalSeat || physicalSeat.isTaken) {
+        throw new ConflictException(
+          `El asiento ${ticket.physicalSeatId} no está disponible para este segmento`,
+        )
+      }
 
-      if (!seat) {
+      const frequency = await this.ticketSaleRepository.findFrequencyById(
+        ticket.frecuencySegmentPriceId,
+      )
+      if (!frequency) {
         throw new NotFoundException(
-          `Asiento con ID ${passenger.physicalSeatId} no encontrado`,
+          `Frecuencia con ID ${ticket.frecuencySegmentPriceId} no encontrada`,
         )
       }
 
-      const basePrice =
-        await this.ticketSaleRepository.calculateBasePriceBetweenCities(
-          createSaleDto.routeSheetId,
-          createSaleDto.originId,
-          createSaleDto.destinationId,
-          seat.seatTypeId,
-        )
-
-      const discount = this.calculateDiscount(
-        basePrice,
-        passenger.passengerType,
+      const routeSheet = await this.ticketSaleRepository.findRouteSheet(
+        frequency.id,
+        ticket.date,
       )
-      const finalPrice = basePrice - discount
+      if (!routeSheet) {
+        throw new NotFoundException(
+          `Precio de segmento con ID ${ticket.frecuencySegmentPriceId} no encontrado`,
+        )
+      }
+
+      const price =
+        frequencySegmentPrice.price * physicalSeat.seatType.valueToApply
+      const discount = this.calculateDiscount(price, ticket.passengerType)
+      const finalPrice = price - discount
 
       ticketsData.push({
-        passengerId: passenger.passengerId,
-        passengerName: passenger.passengerName,
-        passengerType: passenger.passengerType,
+        passengerId: ticket.passengerId,
+        passengerType: ticket.passengerType,
+        passenger: {
+          dni: ticket.passsengerDni,
+          name: ticket.passengerName,
+          surname: ticket.passengerSurname,
+          email: ticket.passengerEmail,
+          birthDate: ticket.passengerBirthDate,
+        },
         price: finalPrice,
-        basePrice,
+        basePrice: frequencySegmentPrice.price,
         discount,
         accessCode: this.generateAccessCode(),
-        status: 'ACTIVE',
-        paymentMethod: createSaleDto.paymentMethod,
-        routeSheetId: createSaleDto.routeSheetId,
-        physicalSeatId: passenger.physicalSeatId,
-        originId: createSaleDto.originId,
-        destinationId: createSaleDto.destinationId,
+        routeSheetId: routeSheet.id,
+        physicalSeatId: ticket.physicalSeatId,
+        originId: frequencySegmentPrice.originId,
+        destinationId: frequencySegmentPrice.destinationId,
+        status: TICKET_STATUS.ACTIVE,
       })
     }
 
@@ -342,93 +169,36 @@ export class OnlineSalesService {
     }
   }
 
-  private calculateTotals(
-    ticketsData: Array<{
-      passengerId: string
-      passengerName: string
-      passengerType: PassengerType
-      price: number
-      basePrice: number
-      discount: number
-      accessCode: string
-      status: string
-      paymentMethod: PaymentMethod
-      routeSheetId: number
-      physicalSeatId: number
-      originId: number
-      destinationId: number
-    }>,
-  ) {
-    const subtotal = ticketsData.reduce(
-      (sum, ticket) => sum + ticket.basePrice,
-      0,
-    )
-    const discounts = ticketsData.reduce(
-      (sum, ticket) => sum + ticket.discount,
-      0,
-    )
-    const taxes = (subtotal - discounts) * 0.15 // 15% IVA
-    const amount = subtotal - discounts + taxes
-
-    return {
-      subtotal,
-      discounts,
-      taxes,
-      amount,
-    }
-  }
-
   private generateAccessCode(): string {
     return uuidv4().replace(/-/g, '').substring(0, 12).toUpperCase()
   }
 
-  private getInitialPaymentStatus(paymentMethod: PaymentMethod): PaymentStatus {
-    switch (paymentMethod) {
-      case PaymentMethod.PAYPAL:
-        return PaymentStatus.APPROVED // PayPal se aprueba inmediatamente si la transacción es exitosa
-      case PaymentMethod.TRANSFER:
-        return PaymentStatus.PENDING // Transferencias requieren validación manual
-      default:
-        return PaymentStatus.PENDING
-    }
-  }
-
-  private getResponseMessage(paymentStatus: PaymentStatus): string {
-    switch (paymentStatus) {
-      case PaymentStatus.APPROVED:
-        return 'Compra procesada exitosamente. Sus boletos están listos.'
-      case PaymentStatus.PENDING:
-        return 'Compra registrada. Su pago está pendiente de validación. Recibirá una notificación cuando sea aprobado.'
-      default:
-        return 'Compra procesada.'
-    }
-  }
-
-  async getCustomerTickets(
-    customerId: number,
-    limit: number = 10,
-    offset: number = 0,
-  ) {
-    const customer = await this.ticketSaleRepository.findUserById(customerId)
-    if (!customer || customer.role !== 'CUSTOMER') {
-      throw new NotFoundException('Cliente no encontrado')
-    }
-
-    return this.ticketSaleRepository.findTicketsByCustomerId(
-      customerId,
-      limit,
-      offset,
+  private async sendConfirmationEmail(tickets: TicketData[]) {
+    // Group tickets by passenger email
+    const ticketsByEmail = tickets.reduce(
+      (acc, ticket) => {
+        if (ticket.passenger.email) {
+          if (!acc[ticket.passenger.email]) {
+            acc[ticket.passenger.email] = []
+          }
+          acc[ticket.passenger.email].push(ticket)
+        }
+        return acc
+      },
+      {} as Record<string, TicketData[]>,
     )
-  }
 
-  async getTicketByAccessCode(accessCode: string) {
-    const ticket =
-      await this.ticketSaleRepository.findTicketByAccessCode(accessCode)
-
-    if (!ticket) {
-      throw new NotFoundException('Boleto no encontrado')
+    // Send email to each passenger
+    for (const [email, passengerTickets] of Object.entries(ticketsByEmail)) {
+      const totalPaid = passengerTickets.reduce(
+        (acc, ticket) => acc + ticket.price,
+        0,
+      )
+      await this.emailService.sendEmail(
+        email,
+        totalPaid,
+        new Date().toISOString(),
+      )
     }
-
-    return ticket
   }
 }

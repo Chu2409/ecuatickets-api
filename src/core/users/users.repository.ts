@@ -26,27 +26,35 @@ export class UsersRepository {
           },
         },
         {
-          name: {
-            contains: search,
-            mode: 'insensitive',
+          person: {
+            name: {
+              contains: search,
+              mode: 'insensitive',
+            },
           },
         },
         {
-          surname: {
-            contains: search,
-            mode: 'insensitive',
+          person: {
+            surname: {
+              contains: search,
+              mode: 'insensitive',
+            },
           },
         },
         {
-          email: {
-            contains: search,
-            mode: 'insensitive',
+          person: {
+            email: {
+              contains: search,
+              mode: 'insensitive',
+            },
           },
         },
         {
-          dni: {
-            contains: search,
-            mode: 'insensitive',
+          person: {
+            dni: {
+              contains: search,
+              mode: 'insensitive',
+            },
           },
         },
       ]
@@ -60,6 +68,12 @@ export class UsersRepository {
         orderBy: {
           id: 'desc',
         },
+        include: {
+          person: true,
+        },
+        omit: {
+          personId: true,
+        },
       }),
       this.dbService.user.count({
         where: whereClause,
@@ -72,6 +86,12 @@ export class UsersRepository {
   async findById(id: number) {
     return this.dbService.user.findUnique({
       where: { id },
+      include: {
+        person: true,
+      },
+      omit: {
+        personId: true,
+      },
     })
   }
 
@@ -98,11 +118,11 @@ export class UsersRepository {
     }
 
     if (email) {
-      conditions.OR?.push({ email })
+      conditions.OR?.push({ person: { email } })
     }
 
     if (dni) {
-      conditions.OR?.push({ dni })
+      conditions.OR?.push({ person: { dni } })
     }
 
     if (excludeUserId) {
@@ -116,6 +136,7 @@ export class UsersRepository {
       },
       include: {
         company: true,
+        person: true,
       },
     })
   }
@@ -123,7 +144,20 @@ export class UsersRepository {
   async create(userData: CreateUserReqDto) {
     return this.dbService.user.create({
       data: {
-        ...userData,
+        username: userData.username,
+        password: userData.password,
+        role: userData.role,
+        isActive: userData.isActive,
+        company: {
+          connect: {
+            id: userData.companyId,
+          },
+        },
+        person: {
+          create: {
+            ...userData.person,
+          },
+        },
       },
       omit: {
         companyId: true,
@@ -135,7 +169,22 @@ export class UsersRepository {
     return this.dbService.user.update({
       where: { id },
       data: {
-        ...data,
+        username: data.username,
+        password: data.password,
+        role: data.role,
+        isActive: data.isActive,
+        company: data.companyId
+          ? {
+              connect: {
+                id: data.companyId,
+              },
+            }
+          : undefined,
+        person: {
+          update: {
+            ...data.person,
+          },
+        },
       },
       omit: {
         companyId: true,

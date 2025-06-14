@@ -1,19 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import {
-  IsNumber,
-  IsOptional,
-  IsPositive,
-  IsString,
-  IsUrl,
-} from 'class-validator'
+import { IsOptional, IsString, IsUrl, ValidateIf } from 'class-validator'
 
 export class CreateCustomizationDto {
-  @IsNumber()
-  @IsPositive()
-  @ApiProperty({
-    description: 'ID de la compañía',
-    example: 1,
-  })
+  @ValidateIf(() => false)
   companyId: number
 
   @IsUrl()

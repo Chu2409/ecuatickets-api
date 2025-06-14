@@ -1,51 +1,19 @@
 import {
   IsBoolean,
-  IsEmail,
   IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsPositive,
   IsString,
-  Length,
+  ValidateNested,
 } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import { USER_ROLE } from '../../types/user-role.enum'
+import { CreatePersonReqDto } from 'src/core/people/dto/req/create-person.dto'
+import { Type } from 'class-transformer'
+
 export class CreateUserReqDto {
-  @IsString({ message: 'name must be a string' })
-  @IsNotEmpty({ message: 'name is required' })
-  @ApiProperty({
-    description: 'The name of the user',
-    example: 'John',
-  })
-  name: string
-
-  @IsString({ message: 'surname must be a string' })
-  @IsNotEmpty({ message: 'surname is required' })
-  @ApiProperty({
-    description: 'The surname of the user',
-    example: 'Doe',
-  })
-  surname: string
-
-  @IsString({ message: 'dni must be a string' })
-  @Length(10, 10, {
-    message: 'dni must be 10 characters long',
-  })
-  @ApiProperty({
-    description: 'The dni of the user',
-    example: '0707047643',
-  })
-  dni: string
-
-  @IsEmail({}, { message: 'email must be a valid email' })
-  @IsNotEmpty({ message: 'email is required' })
-  @ApiProperty({
-    description: 'The email of the user',
-    example: 'juanito21@gmail.com',
-  })
-  email: string
-
   @IsString({ message: 'username must be a string' })
   @IsNotEmpty({ message: 'username is required' })
   @ApiProperty({
@@ -87,4 +55,12 @@ export class CreateUserReqDto {
     example: 1,
   })
   companyId?: number
+
+  @ValidateNested()
+  @Type(() => CreatePersonReqDto)
+  @ApiProperty({
+    description: 'The person of the user',
+    type: CreatePersonReqDto,
+  })
+  person: CreatePersonReqDto
 }

@@ -12,16 +12,20 @@ import {
 import { UsersService } from './users.service'
 import { CreateUserReqDto } from './dto/req/create-user.dto'
 import { UpdateUserReqDto } from './dto/req/update-user.dto'
-import { ApiTags, ApiOperation } from '@nestjs/swagger'
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger'
 import {
   ApiPaginatedResponse,
   ApiStandardResponse,
 } from 'src/common/decorators/api-standard-response.decorator'
 import { BaseUserResDto } from './dto/res/user.dto'
 import { UserFiltersReqDto } from './dto/req/user-filters.dto'
+import { USER_ROLE } from './types/user-role.enum'
+import { Auth } from '../auth/decorators/auth.decorator'
 
-@ApiTags('Users')
+@ApiTags('Users (ADMIN)')
 @Controller('users')
+@ApiBearerAuth()
+@Auth(USER_ROLE.ADMIN)
 export class UsersController {
   constructor(private readonly service: UsersService) {}
 

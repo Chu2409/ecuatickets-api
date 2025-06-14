@@ -48,9 +48,9 @@ export class BusesRepository {
     return [entities, total]
   }
 
-  async findById(id: number) {
+  async findById(id: number, companyId: number) {
     return this.dbService.bus.findUnique({
-      where: { id },
+      where: { id, companyId },
     })
   }
 

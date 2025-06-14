@@ -48,9 +48,9 @@ export class CompanyCustomizationsRepository {
     })
   }
 
-  async update(id: number, dto: UpdateCustomizationDto) {
+  async update(dto: UpdateCustomizationDto) {
     return await this.prisma.companyCustomization.update({
-      where: { id },
+      where: { companyId: dto.companyId },
       data: dto,
     })
   }

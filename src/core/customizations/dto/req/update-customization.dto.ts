@@ -1,7 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger'
-import { IsOptional, IsUrl } from 'class-validator'
+import { IsOptional, IsUrl, ValidateIf } from 'class-validator'
 
 export class UpdateCustomizationDto {
+  @ValidateIf(() => false)
+  companyId: number
+
   @IsUrl()
   @IsOptional()
   @ApiPropertyOptional({

@@ -32,6 +32,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.1.2",
     "@nestjs/swagger": "^11.2.0",
+    "@paypal/checkout-server-sdk": "^1.0.3",
     "@prisma/client": "^6.8.2",
     "@types/qrcode": "^1.5.5",
     "bcrypt": "^5.1.1",

@@ -1,36 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { USER_ROLE } from '../../types/user-role.enum'
 import { CompanyResDto } from 'src/core/companies/dto/res/compy.dto'
+import { PersonResDto } from 'src/core/people/dto/res/person.dto'
 export class BaseUserResDto {
   @ApiProperty({
     description: 'id del usuario',
     example: 1,
   })
   id: number
-
-  @ApiProperty({
-    description: 'The name of the user',
-    example: 'John',
-  })
-  name: string
-
-  @ApiProperty({
-    description: 'The surname of the user',
-    example: 'Doe',
-  })
-  surname: string
-
-  @ApiProperty({
-    description: 'The dni of the user',
-    example: '0707047643',
-  })
-  dni: string
-
-  @ApiProperty({
-    description: 'The email of the user',
-    example: 'juanito21@gmail.com',
-  })
-  email: string
 
   @ApiProperty({
     description: 'The username of the user',
@@ -74,6 +51,12 @@ export class BaseUserResDto {
     example: 1,
   })
   companyId: number | null
+
+  @ApiProperty({
+    description: 'The person of the user',
+    type: PersonResDto,
+  })
+  person: PersonResDto
 }
 
 export class UserCompanyResDto extends BaseUserResDto {

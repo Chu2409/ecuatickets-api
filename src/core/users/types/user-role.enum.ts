@@ -5,6 +5,7 @@ export const USER_ROLE = {
   COMPANY: 'COMPANY',
   CUSTOMER: 'CUSTOMER',
   DRIVER: 'DRIVER',
+  ADMIN: 'ADMIN',
 } as const satisfies Record<UserRole, UserRole>
 
 export type USER_ROLE = (typeof USER_ROLE)[keyof typeof USER_ROLE]

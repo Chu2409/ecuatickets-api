@@ -1,88 +1,53 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Query,
-  ParseIntPipe,
-} from '@nestjs/common'
-import { ApiOperation, ApiTags } from '@nestjs/swagger'
-import {
-  ApiPaginatedResponse,
-  ApiStandardResponse,
-} from 'src/common/decorators/api-standard-response.decorator'
+import { Controller, Get, Post, Body, Patch } from '@nestjs/common'
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
+import { ApiStandardResponse } from 'src/common/decorators/api-standard-response.decorator'
 import { CreateCustomizationDto } from './dto/req/create-customization.dto'
 import { CompanyCustomizationResDto } from './dto/res/customization.dto'
 import { UpdateCustomizationDto } from './dto/req/update-customization.dto'
-import { CustomizationFiltersDto } from './dto/req/customization-filters.dto'
-import { FileUploadService } from 'src/common/utils/file-upload'
 import { CustomizationsService } from './customizations.service'
+import { Auth } from '../auth/decorators/auth.decorator'
+import { USER_ROLE } from '../users/types/user-role.enum'
+import { GetCompanyId } from '../auth/decorators/get-company-id.decorator'
 
-@ApiTags('Company Customizations')
+@ApiTags('Company Customizations (COMPANY)')
 @Controller('company-customizations')
+@ApiBearerAuth()
+@Auth(USER_ROLE.COMPANY)
 export class CustomizationsController {
-  constructor(
-    private readonly service: CustomizationsService,
-    private readonly fileUploadService: FileUploadService,
-  ) {}
+  constructor(private readonly service: CustomizationsService) {}
 
   @Post()
   @ApiOperation({
-    summary: 'Crear una nueva customización de compañía',
+    summary: 'Create a new company customization',
   })
-  @ApiStandardResponse()
-  create(@Body() dto: CreateCustomizationDto) {
+  @ApiStandardResponse(Boolean)
+  create(
+    @Body() dto: CreateCustomizationDto,
+    @GetCompanyId() companyId: number,
+  ) {
+    dto.companyId = companyId
     return this.service.create(dto)
   }
 
-  @Get()
+  @Get('company')
   @ApiOperation({
-    summary: 'Obtener todas las customizaciones',
-  })
-  @ApiPaginatedResponse(CompanyCustomizationResDto)
-  findAll(@Query() filters: CustomizationFiltersDto) {
-    return this.service.findAll(filters)
-  }
-
-  @Get('company/:companyId')
-  @ApiOperation({
-    summary: 'Obtener customización por ID de compañía',
+    summary: 'Get company customization by company id',
   })
   @ApiStandardResponse(CompanyCustomizationResDto)
-  findByCompanyId(@Param('companyId', ParseIntPipe) companyId: number) {
+  findByCompanyId(@GetCompanyId() companyId: number) {
     return this.service.findByCompanyId(companyId)
   }
 
-  @Get(':id')
+  @Patch()
   @ApiOperation({
-    summary: 'Obtener una customización por ID',
-  })
-  @ApiStandardResponse(CompanyCustomizationResDto)
-  findById(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findOne(id)
-  }
-
-  @Patch(':id')
-  @ApiOperation({
-    summary: 'Actualizar una customización por ID',
+    summary: 'Update company customization',
   })
   @ApiStandardResponse()
   update(
-    @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCustomizationDto,
+    @GetCompanyId() companyId: number,
   ) {
-    return this.service.update(id, dto)
-  }
-
-  @Delete(':id')
-  @ApiOperation({
-    summary: 'Eliminar una customización por ID',
-  })
-  @ApiStandardResponse()
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.service.remove(id)
+    dto.companyId = companyId
+    return this.service.update(dto)
   }
 }

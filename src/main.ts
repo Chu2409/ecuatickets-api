@@ -99,7 +99,6 @@ async function bootstrap() {
     'API versioning enabled. Use /api/v1/ to access the API.',
     'Bootstrap',
   )
-  Logger.log(join(__dirname, '..', '..', 'uploads', 'images'))
 }
 
 void bootstrap()

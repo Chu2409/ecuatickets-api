@@ -8,7 +8,7 @@ import { GetUser } from 'src/core/auth/decorators/get-user.decorator'
 import { USER_ROLE } from 'src/core/users/types/user-role.enum'
 import { TicketResDto } from './dto/ticket.dto'
 
-@ApiTags('Purchase History')
+@ApiTags('Purchase History (CUSTOMER)')
 @Controller('purchase-history')
 @ApiBearerAuth()
 @Auth(USER_ROLE.CUSTOMER)
@@ -23,6 +23,6 @@ export class PurchaseHistoryController {
   })
   @ApiStandardResponse(TicketResDto)
   async getUserPurchaseHistory(@GetUser() user: User) {
-    return this.purchaseHistoryService.getUserPurchaseHistory(user.dni)
+    return this.purchaseHistoryService.getUserPurchaseHistory(user.id)
   }
 }

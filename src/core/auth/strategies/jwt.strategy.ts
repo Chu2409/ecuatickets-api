@@ -19,6 +19,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   authenticate(req: Request, options?: unknown): void {
+    if (this.configService.env.NODE_ENV === 'development') {
+      this.pass()
+    }
+
     if (!req.headers.authorization) {
       throw new UnauthorizedException('Token not found')
     }
