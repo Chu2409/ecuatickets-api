@@ -1,0 +1,82 @@
+import { Injectable } from '@nestjs/common'
+import { DatabaseService } from 'src/global/database/database.service'
+import { SearchRoutesDto } from './dto/req/search-routes.dto'
+import { RouteSheet } from '@prisma/client'
+import { ROUTE_STATUS } from './types/route-status.enum'
+
+@Injectable()
+export class RouteSheetsRepository {
+  constructor(private readonly dbService: DatabaseService) {}
+
+  async search(searchRoutesDto: SearchRoutesDto): Promise<RouteSheet[]> {
+    const { originId, destinationId, date } = searchRoutesDto
+
+    return await this.dbService.routeSheet.findMany({
+      where: {
+        date: {
+          gte: new Date(date.setHours(0, 0, 0, 0)),
+          lt: new Date(date.setHours(23, 59, 59, 999)),
+        },
+        frequency: {
+          originId,
+          destinationId,
+          active: true,
+        },
+        status: ROUTE_STATUS.GENERATED,
+      },
+      include: {
+        frequency: {
+          include: {
+            company: true,
+            origin: true,
+            destination: true,
+            segmentPrices: {
+              where: {
+                originId,
+                destinationId,
+              },
+            },
+          },
+        },
+        bus: true,
+      },
+      orderBy: {
+        date: 'asc',
+      },
+    })
+  }
+
+  async getAvailableSeats(id: number) {
+    const routeSheet = await this.dbService.routeSheet.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        busId: true,
+      },
+    })
+
+    return await this.dbService.physicalSeat.findMany({
+      where: {
+        busId: routeSheet?.busId,
+        isTaken: false,
+      },
+      include: {
+        seatType: true,
+      },
+    })
+  }
+
+  async findById(id: number) {
+    return await this.dbService.routeSheet.findUnique({
+      where: { id },
+      include: {
+        bus: {
+          include: {
+            physicalSeats: true,
+          },
+        },
+      },
+    })
+  }
+}

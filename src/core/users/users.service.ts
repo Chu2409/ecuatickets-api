@@ -25,8 +25,8 @@ export class UsersService {
   async create(dto: CreateUserReqDto) {
     await this.validateUserUniqueness({
       username: dto.username,
-      email: dto.email,
-      dni: dto.dni,
+      email: dto.person.email,
+      dni: dto.person.dni,
     })
 
     dto.password = hashPassword(dto.password)
@@ -44,7 +44,6 @@ export class UsersService {
         username: dto.username,
         email: dto.email,
         excludeUserId: id,
-        dni: dto.dni,
       })
     }
 
@@ -107,12 +106,12 @@ export class UsersService {
           'El nombre de usuario ya está en uso',
           HttpStatus.CONFLICT,
         )
-      } else if (existingUser.email === email) {
+      } else if (existingUser.person.email === email) {
         throw new DisplayableException(
           'El correo electrónico ya está en uso',
           HttpStatus.CONFLICT,
         )
-      } else if (existingUser.dni === dni) {
+      } else if (existingUser.person.dni === dni) {
         throw new DisplayableException(
           'El DNI ya está en uso',
           HttpStatus.CONFLICT,

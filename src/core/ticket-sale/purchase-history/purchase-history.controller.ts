@@ -23,6 +23,6 @@ export class PurchaseHistoryController {
   })
   @ApiStandardResponse(TicketResDto)
   async getUserPurchaseHistory(@GetUser() user: User) {
-    return this.purchaseHistoryService.getUserPurchaseHistory(user.dni)
+    return this.purchaseHistoryService.getUserPurchaseHistory(user.id)
   }
 }

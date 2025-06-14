@@ -5,52 +5,50 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator'
-import { PassengerInfoDto } from '../../../dto/req/passenger-info.dto'
+import { TicketInfoDtoReq } from '../../../dto/req/ticket-info.dto'
 import { Type } from 'class-transformer'
-import { PaymentMethod } from '@prisma/client'
+import { PAYMENT_METHOD } from 'src/core/ticket-sale/types/payment-method'
+import { PAYMENT_STATUS } from 'src/core/ticket-sale/types/payment-status'
 
 export class CreateCounterSaleDto {
-  @ApiProperty({ description: 'ID de la hoja de ruta' })
-  @IsNumber()
-  routeSheetId: number
-
-  @ApiProperty({ description: 'Ciudad de origen' })
-  @IsNumber()
-  originId: number
-
-  @ApiProperty({ description: 'Ciudad de destino' })
-  @IsNumber()
-  destinationId: number
+  @ApiProperty({ enum: PAYMENT_METHOD, description: 'Payment method' })
+  @IsEnum(PAYMENT_METHOD)
+  paymentMethod: PAYMENT_METHOD
 
   @ApiProperty({
-    type: [PassengerInfoDto],
-    description: 'Información de los pasajeros',
+    enum: PAYMENT_STATUS,
+    description: 'Payment status',
+    example: PAYMENT_STATUS.PENDING,
   })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => PassengerInfoDto)
-  passengers: PassengerInfoDto[]
-
-  @ApiProperty({ enum: PaymentMethod, description: 'Método de pago' })
-  @IsEnum(PaymentMethod)
-  paymentMethod: PaymentMethod
+  @IsEnum(PAYMENT_STATUS)
+  paymentStatus: PAYMENT_STATUS
 
   @ApiPropertyOptional({
-    description: 'Referencia bancaria (para transferencias)',
+    description: 'Bank reference (for transfers)',
   })
   @IsOptional()
   @IsString()
   bankReference?: string
 
   @ApiProperty({
-    description: 'ID del usuario que realiza la venta (oficinista)',
+    description: 'User ID',
+    example: 1,
   })
   @IsNumber()
+  userId: number
+
+  @ValidateIf(() => false)
   clerkId: number
 
-  @ApiProperty({ description: 'ID de la cooperativa' })
-  @IsNumber()
-  companyId: number
+  @ApiProperty({
+    type: [TicketInfoDtoReq],
+    description: 'Tickets info',
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TicketInfoDtoReq)
+  tickets: TicketInfoDtoReq[]
 }

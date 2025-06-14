@@ -44,12 +44,23 @@ enum UserRole {
   ADMIN
 }
 
-model User {
+model Person {
   id        Int      @id @default(autoincrement()) @map("id")
   name      String   @map("name")
   surname   String   @map("surname")
   dni       String   @unique @map("dni")
-  email     String   @unique @map("email")
+  email     String?  @unique @map("email")
+  birthDate DateTime @map("birth_date")
+
+  user User?
+
+  tickets Ticket[]
+
+  @@map("people")
+}
+
+model User {
+  id        Int      @id @default(autoincrement()) @map("id")
   username  String   @unique @map("username")
   password  String   @map("password")
   role      UserRole @map("role")
@@ -59,10 +70,13 @@ model User {
 
   companyId Int?     @map("company_id")
   company   Company? @relation(fields: [companyId], references: [id])
+  personId  Int      @unique @map("person_id")
+  person    Person   @relation(fields: [personId], references: [id])
 
-  notifications Notification[]
-  ticketScans   TicketScan[]
-  Payment       Payment[]
+  notifications     Notification[]
+  ticketScans       TicketScan[]
+  validatedPayments Payment[]      @relation("PaymentValidatedBy")
+  userPayments      Payment[]      @relation("PaymentUser")
 
   @@map("users")
 }
@@ -76,11 +90,12 @@ model Company {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  users                User[]
-  buses                Bus[]
-  frequencies          Frequency[]
-  CompanyCustomization CompanyCustomization[]
-  Payment              Payment[]
+  customization CompanyCustomization?
+
+  users       User[]
+  buses       Bus[]
+  frequencies Frequency[]
+  seatTypes   SeatType[]
 
   @@map("companies")
 }
@@ -90,11 +105,13 @@ model City {
   name     String @map("name")
   province String @map("province")
 
-  originFrecuencies      Frequency[]        @relation("FrequencyOrigin")
-  destinationFrecuencies Frequency[]        @relation("FrequencyDestination")
-  originTickets          Ticket[]           @relation("TicketOrigin")
-  destinationTickets     Ticket[]           @relation("TicketDestination")
-  intermediateStops      IntermediateStop[]
+  originFrecuencies        Frequency[]             @relation("FrequencyOrigin")
+  destinationFrecuencies   Frequency[]             @relation("FrequencyDestination")
+  originTickets            Ticket[]                @relation("TicketOrigin")
+  destinationTickets       Ticket[]                @relation("TicketDestination")
+  originSegmentPrices      FrequencySegmentPrice[] @relation("SegmentOrigin")
+  destinationSegmentPrices FrequencySegmentPrice[] @relation("SegmentDestination")
+  intermediateStops        IntermediateStop[]
 
   @@unique([name, province])
   @@map("cities")
@@ -114,10 +131,26 @@ model Frequency {
   destinationId Int     @map("destination_city_id")
   destination   City    @relation("FrequencyDestination", fields: [destinationId], references: [id])
 
-  stops       IntermediateStop[]
-  routeSheets RouteSheet[]
+  stops         IntermediateStop[]
+  routeSheets   RouteSheet[]
+  segmentPrices FrequencySegmentPrice[]
 
   @@map("frequencies")
+}
+
+model FrequencySegmentPrice {
+  id    Int   @id @default(autoincrement()) @map("id")
+  price Float @map("price")
+
+  frequencyId   Int       @map("frequency_id")
+  frequency     Frequency @relation(fields: [frequencyId], references: [id])
+  originId      Int       @map("origin_city_id")
+  origin        City      @relation("SegmentOrigin", fields: [originId], references: [id])
+  destinationId Int       @map("destination_city_id")
+  destination   City      @relation("SegmentDestination", fields: [destinationId], references: [id])
+
+  @@unique([frequencyId, originId, destinationId])
+  @@map("frequency_segment_prices")
 }
 
 model IntermediateStop {
@@ -157,6 +190,9 @@ model SeatType {
   description  String? @map("description")
   valueToApply Float   @map("value_to_apply")
 
+  companyId Int     @map("company_id")
+  company   Company @relation(fields: [companyId], references: [id])
+
   seatConfigurations SeatConfiguration[]
   physicalSeats      PhysicalSeat[]
 
@@ -176,11 +212,12 @@ model SeatConfiguration {
 }
 
 model PhysicalSeat {
-  id         Int    @id @default(autoincrement()) @map("id")
-  seatNumber String @map("seat_number")
-  row        Int?   @map("row")
-  column     Int?   @map("column")
-  floor      Int?   @map("floor")
+  id         Int     @id @default(autoincrement()) @map("id")
+  seatNumber String  @map("seat_number")
+  row        Int?    @map("row")
+  column     Int?    @map("column")
+  floor      Int?    @map("floor")
+  isTaken    Boolean @default(false) @map("is_taken")
 
   busId      Int      @map("bus_id")
   bus        Bus      @relation(fields: [busId], references: [id])
@@ -202,7 +239,8 @@ model RouteSheet {
   frequency   Frequency @relation(fields: [frequencyId], references: [id])
   busId       Int       @map("bus_id")
   bus         Bus       @relation(fields: [busId], references: [id])
-  tickets     Ticket[]
+
+  tickets Ticket[]
 
   @@map("route_sheets")
 }
@@ -233,11 +271,12 @@ model Notification {
 }
 
 model CompanyCustomization {
-  id        Int     @id @default(autoincrement()) @map("id")
+  id       Int     @id @default(autoincrement()) @map("id")
+  imageUrl String? @map("image_url")
+  hexcode  String
+
   companyId Int     @unique @map("company_id")
-  imageUrl  String? @map("image_url")
   company   Company @relation(fields: [companyId], references: [id])
-  hexcode   String
 
   @@map("company_customizations")
 }
@@ -250,55 +289,61 @@ enum PaymentStatus {
 }
 
 model Payment {
-  id                  Int           @id @default(autoincrement())
-  amount              Float
-  subtotal            Float
-  taxes               Float?
-  discounts           Float?
-  paymentMethod       PaymentMethod
-  status              PaymentStatus
-  receiptUrl          String?
-  paypalTransactionId String?
-  bankReference       String?
-  validatedBy         Int?
-  validatedAt         DateTime?
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-  isOnlinePayment     Boolean       @default(false)
-  userId              Int
-  user                User          @relation(fields: [userId], references: [id])
-  companyId           Int?
-  company             Company?      @relation(fields: [companyId], references: [id])
-  tickets             Ticket[]
+  id                  Int           @id @default(autoincrement()) @map("id")
+  subtotal            Float         @map("subtotal")
+  discounts           Float?        @map("discounts")
+  total               Float         @map("total")
+  paymentMethod       PaymentMethod @map("payment_method")
+  status              PaymentStatus @map("status")
+  receiptUrl          String?       @map("receipt_url")
+  paypalTransactionId String?       @map("paypal_transaction_id")
+  bankReference       String?       @map("bank_reference")
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+  isOnlinePayment     Boolean       @default(false) @map("is_online_payment")
+  validatedAt         DateTime?     @map("validated_at")
+
+  validatedBy     Int?  @map("validated_by")
+  validatedByUser User? @relation("PaymentValidatedBy", fields: [validatedBy], references: [id])
+  userId          Int   @map("user_id")
+  user            User  @relation("PaymentUser", fields: [userId], references: [id])
+
+  tickets Ticket[]
 
   @@map("payments")
 }
 
+enum TicketStatus {
+  ACTIVE
+  USED
+  CANCELLED
+}
+
 model Ticket {
-  id             Int           @id @default(autoincrement()) @map("id")
-  passengerId    String        @map("passenger_id") // Cédula o identificación
-  passengerName  String        @map("passenger_name")
-  passengerType  PassengerType @map("passenger_type")
-  price          Float         @map("price") // Precio final (con descuentos)
-  basePrice      Float         @map("base_price") // Precio sin descuentos
-  discount       Float         @default(0) @map("discount") // Monto descontado
-  accessCode     String        @unique @map("access_code") // Para QR
-  status         String        @default("ACTIVE") @map("status") // ACTIVE, USED, CANCELLED
-  paymentMethod  PaymentMethod @map("payment_method") // Copia del método de pago
-  receiptUrl     String?       @map("receipt_url") // Comprobante individual
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
-  paymentId      Int?          @map("payment_id")
-  payment        Payment?      @relation(fields: [paymentId], references: [id])
-  routeSheetId   Int           @map("route_sheet_id")
-  routeSheet     RouteSheet    @relation(fields: [routeSheetId], references: [id])
-  physicalSeatId Int           @map("physical_seat_id")
-  physicalSeat   PhysicalSeat  @relation(fields: [physicalSeatId], references: [id])
-  originId       Int           @map("origin_city_id")
-  origin         City          @relation("TicketOrigin", fields: [originId], references: [id])
-  destinationId  Int           @map("destination_city_id")
-  destination    City          @relation("TicketDestination", fields: [destinationId], references: [id])
-  scans          TicketScan[]
+  id            Int           @id @default(autoincrement()) @map("id")
+  price         Float         @map("price")
+  basePrice     Float         @map("base_price")
+  discount      Float         @default(0) @map("discount")
+  accessCode    String        @unique @map("access_code")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  passengerType PassengerType @map("passenger_type")
+  status        TicketStatus  @default(ACTIVE) @map("status")
+
+  passengerId    Int          @map("passenger_id")
+  passenger      Person       @relation(fields: [passengerId], references: [id])
+  paymentId      Int          @map("payment_id")
+  payment        Payment      @relation(fields: [paymentId], references: [id])
+  routeSheetId   Int          @map("route_sheet_id")
+  routeSheet     RouteSheet   @relation(fields: [routeSheetId], references: [id])
+  physicalSeatId Int          @map("physical_seat_id")
+  physicalSeat   PhysicalSeat @relation(fields: [physicalSeatId], references: [id])
+  originId       Int          @map("origin_city_id")
+  origin         City         @relation("TicketOrigin", fields: [originId], references: [id])
+  destinationId  Int          @map("destination_city_id")
+  destination    City         @relation("TicketDestination", fields: [destinationId], references: [id])
+
+  scans TicketScan[]
 
   @@map("tickets")
 }
