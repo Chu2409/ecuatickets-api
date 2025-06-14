@@ -13,6 +13,8 @@ export const config = (): { APP: IConfig } => ({
     UPLOAD_PATH: process.env.UPLOAD_PATH || './uploads/images',
     BASE_URL:
       process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`,
+    PAYPAL_CLIENT_ID: process.env.PAYPAL_CLIENT_ID!,
+    PAYPAL_SECRET: process.env.PAYPAL_SECRET!,
   },
 })
 
@@ -30,4 +32,6 @@ export const configValidationSchema = Joi.object<IConfig>({
   BASE_URL: Joi.string()
     .uri()
     .default(`http://localhost:${process.env.PORT || 3000}`),
+  PAYPAL_CLIENT_ID: Joi.string().required(),
+  PAYPAL_SECRET: Joi.string().required(),
 })

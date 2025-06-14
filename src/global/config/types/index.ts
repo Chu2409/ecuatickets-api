@@ -8,4 +8,6 @@ export interface IConfig {
   MAIL_PASS: string
   UPLOAD_PATH: string
   BASE_URL: string
+  PAYPAL_CLIENT_ID: string
+  PAYPAL_SECRET: string
 }
