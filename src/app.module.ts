@@ -11,6 +11,7 @@ import { CustomizationsModule } from './core/customizations/customizations.modul
 import { EmailModule } from './core/email/email.module'
 import { TicketSaleModule } from './core/ticket-sale/ticket-sale.module'
 import { PaypalModule } from './core/paypal/paypal.module'
+import { RouteSheetsModule } from './core/route-sheets/route-sheets.module'
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { PaypalModule } from './core/paypal/paypal.module'
     EmailModule,
     TicketSaleModule,
     PaypalModule,
+    RouteSheetsModule,
   ],
   providers: [ResponseInterceptor],
 })
