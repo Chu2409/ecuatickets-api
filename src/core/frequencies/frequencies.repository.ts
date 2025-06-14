@@ -3,7 +3,6 @@ import { DatabaseService } from 'src/global/database/database.service'
 import { FrequencyFiltersReqDto } from './dto/req/frequency-filters.dto'
 import { FrequencyResDto } from './dto/res/frequency.dto'
 import { Prisma } from '@prisma/client'
-import { take } from 'rxjs'
 import { CreateFrequencyReqDto } from './dto/req/create-frequency.dto'
 import { UpdateFrequencyReqDto } from './dto/req/update-frequency.dto'
 
@@ -11,19 +10,41 @@ import { UpdateFrequencyReqDto } from './dto/req/update-frequency.dto'
 export class FrequenciesRepository {
   constructor(private readonly dbService: DatabaseService) {}
 
-  async findMany(
-    filters: FrequencyFiltersReqDto,
-  ): Promise<[FrequencyResDto[], number]> {
-    const { limit, page, search } = filters
+  async findMany(filters: FrequencyFiltersReqDto): Promise<[FrequencyResDto[], number]> {
+    const { limit, page, search, companyId } = filters
 
-    const whereClause: Prisma.FrequencyWhereInput = {}
+    const whereClause: Prisma.FrequencyWhereInput = {
+      companyId: companyId ?? undefined,
+    }
 
     if (search) {
       whereClause.OR = [
         {
+          time: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        {
           resolution: {
             contains: search,
             mode: 'insensitive',
+          },
+        },
+        {
+          origin: {
+            name: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          destination: {
+            name: {
+              contains: search,
+              mode: 'insensitive',
+            },
           },
         },
       ]
@@ -37,6 +58,10 @@ export class FrequenciesRepository {
         orderBy: {
           id: 'desc',
         },
+        include: {
+          origin: true,      
+          destination: true, 
+        },
         omit: {
           companyId: true,
         },
@@ -49,9 +74,13 @@ export class FrequenciesRepository {
     return [entities, total]
   }
 
-  async findById(id: number) {
+  async findById(id: number, companyId: number) {
     return this.dbService.frequency.findUnique({
-      where: { id },
+      where: { id, companyId },
+      include: {
+        origin: true,      
+        destination: true, 
+      },
     })
   }
 
@@ -73,19 +102,25 @@ export class FrequenciesRepository {
   }
 
   async verifyIfExists({
-    resolution,
+    time,
+    originId,
+    destinationId,
+    companyId,
     excludeId,
   }: {
-    resolution: string
+    time?: string
+    originId?: number
+    destinationId?: number
+    companyId?: number
     excludeId?: number
   }) {
-    const conditions: Prisma.FrequencyWhereInput = {
-      OR: [],
-      NOT: {},
-    }
+    const conditions: Prisma.FrequencyWhereInput = {}
 
-    if (resolution) {
-      conditions.OR?.push({ resolution })
+    if (time && originId && destinationId && companyId) {
+      conditions.time = time
+      conditions.originId = originId
+      conditions.destinationId = destinationId
+      conditions.companyId = companyId
     }
 
     if (excludeId) {
@@ -95,7 +130,6 @@ export class FrequenciesRepository {
     return this.dbService.frequency.findFirst({
       where: conditions,
     })
-
   }
 
   async remove(id: number) {
@@ -104,13 +138,12 @@ export class FrequenciesRepository {
     })
   }
 
-  async changeStatus(
-    id: number, active: boolean){
+  async changeStatus(id: number, active: boolean) {
     return this.dbService.frequency.update({
       where: { id },
       data: {
         active,
-      },    
+      },
     })
-    }
+  }
 }
