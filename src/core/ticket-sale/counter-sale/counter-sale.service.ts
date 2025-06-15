@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common'
 import { PassengerType, Prisma } from '@prisma/client'
 import { v4 as uuidv4 } from 'uuid'
@@ -10,25 +11,50 @@ import { CreateCounterSaleDto } from './dto/req/create-counter-sale.dto'
 import { TICKET_STATUS } from '../types/ticket-status'
 import { TicketInfoDtoReq } from '../dto/req/ticket-info.dto'
 import { PAYMENT_STATUS } from '../types/payment-status'
+import { PAYMENT_METHOD } from '../types/payment-method'
+import { EmailService } from 'src/core/email/email.service'
+import { DatabaseService } from 'src/global/database/database.service'
+import { PayPalService } from 'src/core/paypal/paypal.service'
 
 @Injectable()
 export class CounterSalesService {
-  constructor(private readonly ticketSaleRepository: TicketSaleRepository) {}
+  constructor(
+    private readonly ticketSaleRepository: TicketSaleRepository,
+    private readonly emailService: EmailService,
+    private readonly prisma: DatabaseService,
+    private readonly paypalService: PayPalService,
+  ) { }
 
   public async processCounterSale(dto: CreateCounterSaleDto) {
     const ticketsData = await this.prepareTicketsData(dto.tickets)
     const paymentData = this.preparePaymentData(ticketsData, dto)
 
-    await this.ticketSaleRepository.createPayment(ticketsData, paymentData)
+    const payment = await this.ticketSaleRepository.createPayment(ticketsData, paymentData)
 
     if (paymentData.status === PAYMENT_STATUS.APPROVED) {
       const physicalSeats = ticketsData.map((ticket) => ticket.physicalSeatId)
       await this.ticketSaleRepository.updatePhysicalSeatsStatus(physicalSeats)
+
+      // Get user's email from database
+      const user = await this.prisma.user.findUnique({
+        where: { id: dto.userId },
+        include: { person: true }
+      })
+
+      // Send confirmation email if user has an email
+      if (user?.person?.email) {
+        await this.emailService.sendEmail(
+          user.person.email,
+          payment.total,
+          new Date().toISOString()
+        )
+      }
     }
+
     return {
       success: true,
       message: 'Venta procesada correctamente',
-      paymentId: paymentData.id,
+      paymentId: payment.id,
       tickets: ticketsData.map((ticket) => ({
         ...ticket,
         accessCode: ticket.accessCode,
@@ -152,12 +178,82 @@ export class CounterSalesService {
     return uuidv4().replace(/-/g, '').substring(0, 12).toUpperCase()
   }
 
-  public async validatePayment(paymentId: number) {
-    const payment = await this.ticketSaleRepository.updatePaymentStatus(
+  public async validatePayment(paymentId: number, paypalOrderId?: string) {
+    // Get payment details first
+    const payment = await this.prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: {
+        user: {
+          include: {
+            person: true
+          }
+        }
+      }
+    })
+
+    if (!payment) {
+      throw new NotFoundException('Pago no encontrado')
+    }
+
+    // If payment is PayPal, verify it first
+    if (payment.paymentMethod === PAYMENT_METHOD.PAYPAL) {
+      if (!paypalOrderId) {
+        throw new BadRequestException('ID de transacción PayPal es requerido para validar el pago')
+      }
+
+      try {
+        const captureResult = await this.paypalService.captureOrder(paypalOrderId)
+
+        if (captureResult.status !== 'COMPLETED') {
+          await this.ticketSaleRepository.updatePaymentStatus(
+            paymentId,
+            PAYMENT_STATUS.REJECTED
+          )
+          throw new BadRequestException('El pago de PayPal no se completó correctamente')
+        }
+
+        // Update PayPal transaction ID in the payment
+        await this.prisma.payment.update({
+          where: { id: paymentId },
+          data: {
+            paypalTransactionId: paypalOrderId
+          }
+        })
+      } catch (error) {
+        await this.ticketSaleRepository.updatePaymentStatus(
+          paymentId,
+          PAYMENT_STATUS.REJECTED
+        )
+        throw new BadRequestException('Error al verificar el pago de PayPal')
+      }
+    }
+
+    // Update payment status to APPROVED
+    const updatedPayment = await this.ticketSaleRepository.updatePaymentStatus(
       paymentId,
-      PAYMENT_STATUS.APPROVED,
+      PAYMENT_STATUS.APPROVED
     )
-    return payment
+
+    // Get tickets for this payment
+    const tickets = await this.ticketSaleRepository.findTicketsByPaymentId(paymentId)
+    const physicalSeats = tickets.map(ticket => ticket.physicalSeatId)
+    await this.ticketSaleRepository.updatePhysicalSeatsStatus(physicalSeats)
+
+    // Send confirmation email if user has an email
+    if (updatedPayment.user?.person?.email) {
+      await this.emailService.sendEmail(
+        updatedPayment.user.person.email,
+        updatedPayment.total,
+        new Date().toISOString()
+      )
+    }
+
+    return {
+      success: true,
+      message: 'Pago aprobado correctamente',
+      payment: updatedPayment,
+      tickets
+    }
   }
 
   public async rejectPayment(paymentId: number) {
@@ -165,6 +261,10 @@ export class CounterSalesService {
       paymentId,
       PAYMENT_STATUS.REJECTED,
     )
-    return payment
+    return {
+      success: true,
+      message: 'Pago rechazado correctamente',
+      payment
+    }
   }
 }

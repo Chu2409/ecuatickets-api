@@ -22,25 +22,84 @@ export class OnlineSalesService {
     private readonly ticketSaleRepository: TicketSaleRepository,
     private readonly emailService: EmailService,
     private readonly paypalService: PayPalService,
-  ) {}
+  ) { }
 
   public async processOnlineSale(dto: CreateOnlineSaleDto) {
-    // Verify payment based on payment method
-    this.verifyPaymentType(dto)
-
     const ticketsData = await this.prepareTicketsData(dto.tickets)
     const paymentData = this.preparePaymentData(ticketsData, dto)
 
-    await this.ticketSaleRepository.createPayment(ticketsData, paymentData)
+    // Create payment and tickets in PENDING status
+    const payment = await this.ticketSaleRepository.createPayment(ticketsData, paymentData)
+
+    // Handle PayPal payment flow
+    if (dto.paymentMethod === PAYMENT_METHOD.PAYPAL) {
+      const paypalOrder = await this.paypalService.createOrder(paymentData.total.toString())
+      return {
+        success: true,
+        message: 'PayPal order created successfully',
+        paymentId: payment.id,
+        paypalOrderId: paypalOrder.id,
+        approvalUrl: paypalOrder.links.find(link => link.rel === 'approve').href
+      }
+    }
+
+    return {
+      success: true,
+      message: 'Venta procesada correctamente',
+      paymentId: payment.id,
+      tickets: ticketsData.map((ticket) => ({
+        ...ticket,
+        accessCode: ticket.accessCode,
+      })),
+    }
+  }
+
+  public async verifyPayPalPayment(paymentId: number, paypalOrderId: string) {
+    try {
+      const captureResult = await this.paypalService.captureOrder(paypalOrderId)
+
+      if (captureResult.status === 'COMPLETED') {
+        const payment = await this.ticketSaleRepository.updatePaymentStatus(
+          paymentId,
+          PAYMENT_STATUS.APPROVED
+        )
+
+        // Update physical seats status
+        const tickets = await this.ticketSaleRepository.findTicketsByPaymentId(paymentId)
+        const physicalSeats = tickets.map(ticket => ticket.physicalSeatId)
+        await this.ticketSaleRepository.updatePhysicalSeatsStatus(physicalSeats)
+
+        // Send confirmation email if user has an email
+        if (payment.user.person.email) {
+          await this.emailService.sendEmail(
+            payment.user.person.email,
+            payment.total,
+            new Date().toISOString()
+          )
+        }
+
+        return {
+          success: true,
+          message: 'Pago verificado y procesado correctamente',
+          payment,
+          tickets
+        }
+      }
+
+      throw new BadRequestException('El pago de PayPal no se completó correctamente')
+    } catch (error) {
+      await this.ticketSaleRepository.updatePaymentStatus(
+        paymentId,
+        PAYMENT_STATUS.REJECTED
+      )
+      throw new BadRequestException('Error al verificar el pago de PayPal')
+    }
   }
 
   private verifyPaymentType(dto: CreateOnlineSaleDto) {
     switch (dto.paymentMethod) {
       case PAYMENT_METHOD.PAYPAL:
-        if (!dto.paypalTransactionId) {
-          throw new BadRequestException('PayPal transaction ID is required')
-        }
-        // await this.paypalService.captureOrder(dto.paypalTransactionId)
+        // No need to verify paypalTransactionId anymore
         break
       case PAYMENT_METHOD.TRANSFER:
         if (!dto.bankReference || !dto.receiptUrl) {
@@ -48,7 +107,6 @@ export class OnlineSalesService {
             'Bank reference and receipt URL are required for bank transfers',
           )
         }
-        // Here you could add additional verification for bank transfers
         break
       default:
         throw new BadRequestException('Invalid payment method for online sales')

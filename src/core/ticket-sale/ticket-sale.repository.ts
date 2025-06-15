@@ -19,7 +19,7 @@ export type TicketData = Omit<
 
 @Injectable()
 export class TicketSaleRepository {
-  constructor(private prisma: DatabaseService) {}
+  constructor(private prisma: DatabaseService) { }
 
   async findFrequencySegmentPriceById(id: number) {
     return await this.prisma.frequencySegmentPrice.findUnique({
@@ -76,8 +76,9 @@ export class TicketSaleRepository {
     tickets: TicketData[],
     paymentData: Prisma.PaymentCreateManyInput,
   ) {
+    let createdPayment;
     await this.prisma.$transaction(async (tx) => {
-      const payment = await tx.payment.create({
+      createdPayment = await tx.payment.create({
         data: paymentData,
       })
 
@@ -97,7 +98,7 @@ export class TicketSaleRepository {
             data: {
               ...ticket,
               passengerId: newPassenger.id,
-              paymentId: payment.id,
+              paymentId: createdPayment.id,
             },
           })
         } else {
@@ -105,11 +106,30 @@ export class TicketSaleRepository {
             data: {
               ...ticket,
               passengerId: ticket.passengerId,
-              paymentId: payment.id,
+              paymentId: createdPayment.id,
             },
           })
         }
       }
+    })
+    return createdPayment;
+  }
+
+  async findTicketsByPaymentId(paymentId: number) {
+    return this.prisma.ticket.findMany({
+      where: { paymentId },
+      include: {
+        physicalSeat: true,
+        payment: {
+          include: {
+            user: {
+              include: {
+                person: true
+              }
+            }
+          }
+        }
+      },
     })
   }
 
@@ -184,6 +204,13 @@ export class TicketSaleRepository {
       data: {
         status,
       },
+      include: {
+        user: {
+          include: {
+            person: true
+          }
+        }
+      }
     })
   }
 }

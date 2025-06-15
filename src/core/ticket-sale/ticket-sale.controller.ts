@@ -5,8 +5,10 @@ import {
   Param,
   ParseIntPipe,
   Patch,
+  Query,
+  BadRequestException,
 } from '@nestjs/common'
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from '@nestjs/swagger'
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger'
 import { CounterSalesService } from './counter-sale/counter-sale.service'
 import { OnlineSalesService } from './online-sale/online-sale.service'
 import { CreateCounterSaleDto } from './counter-sale/dto/req/create-counter-sale.dto'
@@ -16,6 +18,8 @@ import { USER_ROLE } from '../users/types/user-role.enum'
 import { ApiStandardResponse } from 'src/common/decorators/api-standard-response.decorator'
 import { GetUser } from '../auth/decorators/get-user.decorator'
 import { User } from '@prisma/client'
+import { PAYMENT_METHOD } from './types/payment-method'
+import { DatabaseService } from 'src/global/database/database.service'
 
 @ApiTags('Ticket Sales (CLERK, CUSTOMER)')
 @Controller('ticket-sales')
@@ -25,7 +29,8 @@ export class TicketSaleController {
   constructor(
     private readonly counterSalesService: CounterSalesService,
     private readonly onlineSalesService: OnlineSalesService,
-  ) {}
+    private readonly prisma: DatabaseService,
+  ) { }
 
   @Post('counter')
   @ApiOperation({
@@ -64,11 +69,33 @@ export class TicketSaleController {
     description: 'ID del pago a validar',
     type: 'number',
   })
+  @ApiQuery({
+    name: 'paypalOrderId',
+    description: 'ID de la orden de PayPal (requerido si el método de pago es PayPal)',
+    type: 'string',
+    required: false,
+  })
   @Auth(USER_ROLE.CLERK)
   async validatePayment(
     @Param('paymentId', ParseIntPipe) paymentId: number,
+    @Query('paypalOrderId') paypalOrderId?: string,
   ): Promise<{ message: string }> {
-    await this.counterSalesService.validatePayment(paymentId)
+    // Get payment details to check payment method
+    const payment = await this.prisma.payment.findUnique({
+      where: { id: paymentId },
+      select: { paymentMethod: true }
+    })
+
+    if (!payment) {
+      throw new BadRequestException('Pago no encontrado')
+    }
+
+    // If payment method is PayPal, paypalOrderId is required
+    if (payment.paymentMethod === PAYMENT_METHOD.PAYPAL && !paypalOrderId) {
+      throw new BadRequestException('ID de orden de PayPal es requerido para validar pagos de PayPal')
+    }
+
+    await this.counterSalesService.validatePayment(paymentId, paypalOrderId)
     return { message: 'Pago validado exitosamente' }
   }
 
