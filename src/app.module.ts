@@ -13,6 +13,8 @@ import { TicketSaleModule } from './core/ticket-sale/ticket-sale.module'
 import { PaypalModule } from './core/paypal/paypal.module'
 import { RouteSheetsModule } from './core/route-sheets/route-sheets.module'
 import { FrequenciesModule } from './core/frequencies/frequencies.module'
+import { SeatTypesModule } from './core/bus-customization/seat-types/seat-types.module'
+import { BusCustomizationModule } from './core/bus-customization/bus-customization.module'
 
 @Module({
   imports: [
@@ -28,7 +30,9 @@ import { FrequenciesModule } from './core/frequencies/frequencies.module'
     TicketSaleModule,
     PaypalModule,
     RouteSheetsModule,
-    FrequenciesModule
+    FrequenciesModule,
+    SeatTypesModule,
+    BusCustomizationModule
   ],
   providers: [ResponseInterceptor],
 })
