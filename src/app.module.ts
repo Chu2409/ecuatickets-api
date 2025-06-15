@@ -12,6 +12,7 @@ import { EmailModule } from './core/email/email.module'
 import { TicketSaleModule } from './core/ticket-sale/ticket-sale.module'
 import { PaypalModule } from './core/paypal/paypal.module'
 import { RouteSheetsModule } from './core/route-sheets/route-sheets.module'
+import { FrequenciesModule } from './core/frequencies/frequencies.module'
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { RouteSheetsModule } from './core/route-sheets/route-sheets.module'
     TicketSaleModule,
     PaypalModule,
     RouteSheetsModule,
+    FrequenciesModule
   ],
   providers: [ResponseInterceptor],
 })
