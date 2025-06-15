@@ -1,5 +1,12 @@
-import { Controller, Post, Body } from '@nestjs/common'
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger'
+import {
+  Controller,
+  Post,
+  Body,
+  Param,
+  ParseIntPipe,
+  Patch,
+} from '@nestjs/common'
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from '@nestjs/swagger'
 import { CounterSalesService } from './counter-sale/counter-sale.service'
 import { OnlineSalesService } from './online-sale/online-sale.service'
 import { CreateCounterSaleDto } from './counter-sale/dto/req/create-counter-sale.dto'
@@ -48,41 +55,39 @@ export class TicketSaleController {
     return this.onlineSalesService.processOnlineSale(createSaleDto)
   }
 
-  // @Patch('payments/:paymentId/validate')
-  // @ApiOperation({
-  //   summary: 'Validate pending payment (CLERK)',
-  // })
-  // @ApiParam({
-  //   name: 'paymentId',
-  //   description: 'ID del pago a validar',
-  //   type: 'number',
-  // })
-  // @Auth(USER_ROLE.CLERK)
-  // async validatePayment(
-  //   @Param('paymentId', ParseIntPipe) paymentId: number,
-  //   @Body('clerkId') clerkId: number,
-  // ): Promise<{ message: string }> {
-  //   await this.counterSalesService.validatePayment(paymentId, clerkId)
-  //   return { message: 'Pago validado exitosamente' }
-  // }
+  @Patch('payments/:paymentId/validate')
+  @ApiOperation({
+    summary: 'Validate pending payment (CLERK)',
+  })
+  @ApiParam({
+    name: 'paymentId',
+    description: 'ID del pago a validar',
+    type: 'number',
+  })
+  @Auth(USER_ROLE.CLERK)
+  async validatePayment(
+    @Param('paymentId', ParseIntPipe) paymentId: number,
+  ): Promise<{ message: string }> {
+    await this.counterSalesService.validatePayment(paymentId)
+    return { message: 'Pago validado exitosamente' }
+  }
 
-  // @Patch('payments/:paymentId/reject')
-  // @ApiOperation({
-  //   summary: 'Reject pending payment (CLERK)',
-  // })
-  // @ApiParam({
-  //   name: 'paymentId',
-  //   description: 'ID del pago a rechazar',
-  //   type: 'number',
-  // })
-  // @Auth(USER_ROLE.CLERK)
-  // async rejectPayment(
-  //   @Param('paymentId', ParseIntPipe) paymentId: number,
-  //   @Body('clerkId', ParseIntPipe) clerkId: number,
-  // ): Promise<{ message: string }> {
-  //   await this.counterSalesService.rejectPayment(paymentId, clerkId)
-  //   return { message: 'Pago rechazado exitosamente' }
-  // }
+  @Patch('payments/:paymentId/reject')
+  @ApiOperation({
+    summary: 'Reject pending payment (CLERK)',
+  })
+  @ApiParam({
+    name: 'paymentId',
+    description: 'ID del pago a rechazar',
+    type: 'number',
+  })
+  @Auth(USER_ROLE.CLERK)
+  async rejectPayment(
+    @Param('paymentId', ParseIntPipe) paymentId: number,
+  ): Promise<{ message: string }> {
+    await this.counterSalesService.rejectPayment(paymentId)
+    return { message: 'Pago rechazado exitosamente' }
+  }
 
   // @Get('customers/:customerId/tickets')
   // @ApiOperation({

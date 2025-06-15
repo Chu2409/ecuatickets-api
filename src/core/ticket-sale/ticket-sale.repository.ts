@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { Prisma, RouteSheet } from '@prisma/client'
+import { PaymentStatus, Prisma, RouteSheet } from '@prisma/client'
 import { DatabaseService } from 'src/global/database/database.service'
 import { TICKET_STATUS } from './types/ticket-status'
 
@@ -175,6 +175,15 @@ export class TicketSaleRepository {
     return this.prisma.physicalSeat.updateMany({
       where: { id: { in: physicalSeats } },
       data: { isTaken: true },
+    })
+  }
+
+  async updatePaymentStatus(paymentId: number, status: PaymentStatus) {
+    return this.prisma.payment.update({
+      where: { id: paymentId },
+      data: {
+        status,
+      },
     })
   }
 }

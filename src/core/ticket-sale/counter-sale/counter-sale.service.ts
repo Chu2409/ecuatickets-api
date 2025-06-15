@@ -25,6 +25,15 @@ export class CounterSalesService {
       const physicalSeats = ticketsData.map((ticket) => ticket.physicalSeatId)
       await this.ticketSaleRepository.updatePhysicalSeatsStatus(physicalSeats)
     }
+    return {
+      success: true,
+      message: 'Venta procesada correctamente',
+      paymentId: paymentData.id,
+      tickets: ticketsData.map((ticket) => ({
+        ...ticket,
+        accessCode: ticket.accessCode,
+      })),
+    }
   }
 
   private preparePaymentData(
@@ -141,5 +150,21 @@ export class CounterSalesService {
 
   private generateAccessCode(): string {
     return uuidv4().replace(/-/g, '').substring(0, 12).toUpperCase()
+  }
+
+  public async validatePayment(paymentId: number) {
+    const payment = await this.ticketSaleRepository.updatePaymentStatus(
+      paymentId,
+      PAYMENT_STATUS.APPROVED,
+    )
+    return payment
+  }
+
+  public async rejectPayment(paymentId: number) {
+    const payment = await this.ticketSaleRepository.updatePaymentStatus(
+      paymentId,
+      PAYMENT_STATUS.REJECTED,
+    )
+    return payment
   }
 }
