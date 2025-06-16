@@ -228,10 +228,6 @@ export class CounterSalesService {
           },
         })
       } catch (error) {
-        await this.ticketSaleRepository.updatePaymentStatus(
-          paymentId,
-          PAYMENT_STATUS.REJECTED,
-        )
         throw new BadRequestException('Error al verificar el pago de PayPal')
       }
     }
