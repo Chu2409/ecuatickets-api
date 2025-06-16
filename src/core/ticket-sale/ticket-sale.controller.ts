@@ -8,7 +8,13 @@ import {
   Query,
   BadRequestException,
 } from '@nestjs/common'
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger'
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger'
 import { CounterSalesService } from './counter-sale/counter-sale.service'
 import { OnlineSalesService } from './online-sale/online-sale.service'
 import { CreateCounterSaleDto } from './counter-sale/dto/req/create-counter-sale.dto'
@@ -30,7 +36,7 @@ export class TicketSaleController {
     private readonly counterSalesService: CounterSalesService,
     private readonly onlineSalesService: OnlineSalesService,
     private readonly prisma: DatabaseService,
-  ) { }
+  ) {}
 
   @Post('counter')
   @ApiOperation({
@@ -71,7 +77,8 @@ export class TicketSaleController {
   })
   @ApiQuery({
     name: 'paypalOrderId',
-    description: 'ID de la orden de PayPal (requerido si el método de pago es PayPal)',
+    description:
+      'ID de la orden de PayPal (requerido si el método de pago es PayPal)',
     type: 'string',
     required: false,
   })
@@ -83,7 +90,7 @@ export class TicketSaleController {
     // Get payment details to check payment method
     const payment = await this.prisma.payment.findUnique({
       where: { id: paymentId },
-      select: { paymentMethod: true }
+      select: { paymentMethod: true },
     })
 
     if (!payment) {
@@ -92,7 +99,9 @@ export class TicketSaleController {
 
     // If payment method is PayPal, paypalOrderId is required
     if (payment.paymentMethod === PAYMENT_METHOD.PAYPAL && !paypalOrderId) {
-      throw new BadRequestException('ID de orden de PayPal es requerido para validar pagos de PayPal')
+      throw new BadRequestException(
+        'ID de orden de PayPal es requerido para validar pagos de PayPal',
+      )
     }
 
     await this.counterSalesService.validatePayment(paymentId, paypalOrderId)

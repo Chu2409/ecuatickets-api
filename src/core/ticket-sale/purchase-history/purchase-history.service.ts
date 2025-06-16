@@ -16,6 +16,12 @@ export class PurchaseHistoryService {
             origin: true,
             destination: true,
             routeSheet: true,
+            passenger: true,
+            physicalSeat: {
+              include: {
+                bus: true,
+              },
+            },
           },
         },
       },

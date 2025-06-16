@@ -23,13 +23,16 @@ export class CounterSalesService {
     private readonly emailService: EmailService,
     private readonly prisma: DatabaseService,
     private readonly paypalService: PayPalService,
-  ) { }
+  ) {}
 
   public async processCounterSale(dto: CreateCounterSaleDto) {
     const ticketsData = await this.prepareTicketsData(dto.tickets)
     const paymentData = this.preparePaymentData(ticketsData, dto)
 
-    const payment = await this.ticketSaleRepository.createPayment(ticketsData, paymentData)
+    const payment = await this.ticketSaleRepository.createPayment(
+      ticketsData,
+      paymentData,
+    )
 
     if (paymentData.status === PAYMENT_STATUS.APPROVED) {
       const physicalSeats = ticketsData.map((ticket) => ticket.physicalSeatId)
@@ -38,7 +41,7 @@ export class CounterSalesService {
       // Get user's email from database
       const user = await this.prisma.user.findUnique({
         where: { id: dto.userId },
-        include: { person: true }
+        include: { person: true },
       })
 
       // Send confirmation email if user has an email
@@ -46,7 +49,7 @@ export class CounterSalesService {
         await this.emailService.sendEmail(
           user.person.email,
           payment.total,
-          new Date().toISOString()
+          new Date().toISOString(),
         )
       }
     }
@@ -185,10 +188,10 @@ export class CounterSalesService {
       include: {
         user: {
           include: {
-            person: true
-          }
-        }
-      }
+            person: true,
+          },
+        },
+      },
     })
 
     if (!payment) {
@@ -198,31 +201,36 @@ export class CounterSalesService {
     // If payment is PayPal, verify it first
     if (payment.paymentMethod === PAYMENT_METHOD.PAYPAL) {
       if (!paypalOrderId) {
-        throw new BadRequestException('ID de transacción PayPal es requerido para validar el pago')
+        throw new BadRequestException(
+          'ID de transacción PayPal es requerido para validar el pago',
+        )
       }
 
       try {
-        const captureResult = await this.paypalService.captureOrder(paypalOrderId)
+        const captureResult =
+          await this.paypalService.captureOrder(paypalOrderId)
 
         if (captureResult.status !== 'COMPLETED') {
           await this.ticketSaleRepository.updatePaymentStatus(
             paymentId,
-            PAYMENT_STATUS.REJECTED
+            PAYMENT_STATUS.REJECTED,
           )
-          throw new BadRequestException('El pago de PayPal no se completó correctamente')
+          throw new BadRequestException(
+            'El pago de PayPal no se completó correctamente',
+          )
         }
 
         // Update PayPal transaction ID in the payment
         await this.prisma.payment.update({
           where: { id: paymentId },
           data: {
-            paypalTransactionId: paypalOrderId
-          }
+            paypalTransactionId: paypalOrderId,
+          },
         })
       } catch (error) {
         await this.ticketSaleRepository.updatePaymentStatus(
           paymentId,
-          PAYMENT_STATUS.REJECTED
+          PAYMENT_STATUS.REJECTED,
         )
         throw new BadRequestException('Error al verificar el pago de PayPal')
       }
@@ -231,12 +239,13 @@ export class CounterSalesService {
     // Update payment status to APPROVED
     const updatedPayment = await this.ticketSaleRepository.updatePaymentStatus(
       paymentId,
-      PAYMENT_STATUS.APPROVED
+      PAYMENT_STATUS.APPROVED,
     )
 
     // Get tickets for this payment
-    const tickets = await this.ticketSaleRepository.findTicketsByPaymentId(paymentId)
-    const physicalSeats = tickets.map(ticket => ticket.physicalSeatId)
+    const tickets =
+      await this.ticketSaleRepository.findTicketsByPaymentId(paymentId)
+    const physicalSeats = tickets.map((ticket) => ticket.physicalSeatId)
     await this.ticketSaleRepository.updatePhysicalSeatsStatus(physicalSeats)
 
     // Send confirmation email if user has an email
@@ -244,7 +253,7 @@ export class CounterSalesService {
       await this.emailService.sendEmail(
         updatedPayment.user.person.email,
         updatedPayment.total,
-        new Date().toISOString()
+        new Date().toISOString(),
       )
     }
 
@@ -252,7 +261,7 @@ export class CounterSalesService {
       success: true,
       message: 'Pago aprobado correctamente',
       payment: updatedPayment,
-      tickets
+      tickets,
     }
   }
 
@@ -264,7 +273,7 @@ export class CounterSalesService {
     return {
       success: true,
       message: 'Pago rechazado correctamente',
-      payment
+      payment,
     }
   }
 }

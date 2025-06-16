@@ -19,7 +19,7 @@ export type TicketData = Omit<
 
 @Injectable()
 export class TicketSaleRepository {
-  constructor(private prisma: DatabaseService) { }
+  constructor(private prisma: DatabaseService) {}
 
   async findFrequencySegmentPriceById(id: number) {
     return await this.prisma.frequencySegmentPrice.findUnique({
@@ -76,23 +76,23 @@ export class TicketSaleRepository {
     tickets: TicketData[],
     paymentData: Prisma.PaymentCreateManyInput,
   ) {
-    let createdPayment;
+    let createdPayment
     await this.prisma.$transaction(async (tx) => {
       createdPayment = await tx.payment.create({
         data: paymentData,
       })
 
       for (const { passenger, ...ticket } of tickets) {
-        let passengerId = ticket.passengerId;
+        let passengerId = ticket.passengerId
 
         // Si no hay passengerId, buscar por DNI
         if (!passengerId) {
           const existingPassenger = await tx.person.findUnique({
-            where: { dni: passenger.dni }
-          });
+            where: { dni: passenger.dni },
+          })
 
           if (existingPassenger) {
-            passengerId = existingPassenger.id;
+            passengerId = existingPassenger.id
           } else {
             // Si no existe, crear nuevo pasajero
             const newPassenger = await tx.person.create({
@@ -103,17 +103,19 @@ export class TicketSaleRepository {
                 email: passenger.email,
                 dni: passenger.dni,
               },
-            });
-            passengerId = newPassenger.id;
+            })
+            passengerId = newPassenger.id
           }
         } else {
           // Si hay passengerId, verificar que existe
           const existingPassenger = await tx.person.findUnique({
-            where: { id: passengerId }
-          });
+            where: { id: passengerId },
+          })
 
           if (!existingPassenger) {
-            throw new NotFoundException(`Pasajero con ID ${passengerId} no encontrado`);
+            throw new NotFoundException(
+              `Pasajero con ID ${passengerId} no encontrado`,
+            )
           }
         }
 
@@ -124,10 +126,10 @@ export class TicketSaleRepository {
             passengerId,
             paymentId: createdPayment.id,
           },
-        });
+        })
       }
-    });
-    return createdPayment;
+    })
+    return createdPayment
   }
 
   async findTicketsByPaymentId(paymentId: number) {
@@ -139,11 +141,11 @@ export class TicketSaleRepository {
           include: {
             user: {
               include: {
-                person: true
-              }
-            }
-          }
-        }
+                person: true,
+              },
+            },
+          },
+        },
       },
     })
   }
@@ -222,10 +224,10 @@ export class TicketSaleRepository {
       include: {
         user: {
           include: {
-            person: true
-          }
-        }
-      }
+            person: true,
+          },
+        },
+      },
     })
   }
 }
