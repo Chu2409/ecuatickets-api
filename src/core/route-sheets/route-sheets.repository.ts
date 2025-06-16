@@ -108,6 +108,7 @@ export class RouteSheetsRepository {
               destination: true,
             },
           },
+          bus: true,
         },
         omit: {
           frequencyId: true,
