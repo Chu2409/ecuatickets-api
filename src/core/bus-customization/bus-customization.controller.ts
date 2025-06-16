@@ -30,49 +30,50 @@ export class BusCustomizationController {
   constructor(private readonly service: BusCustomizationService) {}
 
   @Post(':busId/add-seats')
-@ApiOperation({
-    summary: "Add seats to an existing bus",
-    description: "Adds seats to a bus maintaining consecutive numbering and row consistency. Always accepts array of configurations"
-})
-@ApiBody({
+  @ApiOperation({
+    summary: 'Add seats to an existing bus',
+    description:
+      'Adds seats to a bus maintaining consecutive numbering and row consistency. Always accepts array of configurations',
+  })
+  @ApiBody({
     description: 'Array of seat configurations',
     type: [CreateBusCustomizationReqDto],
     examples: {
-        single: {
-            summary: 'Single configuration',
-            value: [
-                {
-                    seatTypeId: 1,
-                    quantity: 20,
-                    floor: 1
-                }
-            ]
-        },
-        multiple: {
-            summary: 'Multiple configurations',
-            value: [
-                {
-                    seatTypeId: 1,
-                    quantity: 20,
-                    floor: 1
-                },
-                {
-                    seatTypeId: 2,
-                    quantity: 10,
-                    floor: 2
-                }
-            ]
-        }
-    }
-})
-@ApiStandardResponse(BusCustomizationArrayResDto)
-addSeatsToExistingBus(
+      single: {
+        summary: 'Single configuration',
+        value: [
+          {
+            seatTypeId: 1,
+            quantity: 20,
+            floor: 1,
+          },
+        ],
+      },
+      multiple: {
+        summary: 'Multiple configurations',
+        value: [
+          {
+            seatTypeId: 1,
+            quantity: 20,
+            floor: 1,
+          },
+          {
+            seatTypeId: 2,
+            quantity: 10,
+            floor: 2,
+          },
+        ],
+      },
+    },
+  })
+  @ApiStandardResponse(BusCustomizationArrayResDto)
+  addSeatsToExistingBus(
     @Param('busId', ParseIntPipe) busId: number,
     @Body() dto: CreateBusCustomizationReqDto[],
-    @GetCompanyId() companyId: number
-) {
-    return this.service.addSeatsToExistingBus(busId, dto, companyId);
-}
+    @GetCompanyId() companyId: number,
+  ) {
+    return this.service.addSeatsToExistingBus(busId, dto, companyId)
+  }
 
   @Get(':busId/seats')
   @ApiOperation({

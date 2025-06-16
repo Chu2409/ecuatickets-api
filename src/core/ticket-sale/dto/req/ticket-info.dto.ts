@@ -15,7 +15,8 @@ import { PassengerType } from '@prisma/client'
 
 export class TicketInfoDtoReq {
   @ApiProperty({
-    description: 'ID del pasajero (opcional). Si no se proporciona, se creará un nuevo pasajero',
+    description:
+      'ID del pasajero (opcional). Si no se proporciona, se creará un nuevo pasajero',
     required: false,
   })
   @IsOptional()
@@ -23,7 +24,8 @@ export class TicketInfoDtoReq {
   passengerId?: number
 
   @ApiProperty({
-    description: 'DNI del pasajero. Si el pasajero ya existe, se usará su información',
+    description:
+      'DNI del pasajero. Si el pasajero ya existe, se usará su información',
     example: '1234567890',
   })
   @IsString()

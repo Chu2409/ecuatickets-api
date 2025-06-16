@@ -1,62 +1,61 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty } from '@nestjs/swagger'
 
 export class SeatDto {
-
-    @ApiProperty({
+  @ApiProperty({
     description: 'Unique identifier for the seat',
-    example: 1
+    example: 1,
   })
-    id: number;
-    
+  id: number
+
   @ApiProperty({
     description: 'Seat number',
-    example: '1'
+    example: '1',
   })
-  seatNumber: string;
+  seatNumber: string
 
   @ApiProperty({
     description: 'Row number',
-    example: 1
+    example: 1,
   })
-  row: number;
+  row: number
 
   @ApiProperty({
     description: 'Column number',
-    example: 1
+    example: 1,
   })
-  column: number;
+  column: number
 
   @ApiProperty({
     description: 'Seat type name',
-    example: 'Standard'
+    example: 'Standard',
   })
-  seatType: string;
+  seatType: string
 
   @ApiProperty({
     description: 'Whether the seat is taken',
-    example: false
+    example: false,
   })
-  isTaken: boolean;
-}  
+  isTaken: boolean
+}
 
 export class BusSeatsResDto {
   @ApiProperty({
     description: 'Bus ID',
-    example: 1
+    example: 1,
   })
-  busId: number;
+  busId: number
 
   @ApiProperty({
     description: 'Total number of seats',
-    example: 40
+    example: 40,
   })
-  totalSeats: number;
+  totalSeats: number
 
   @ApiProperty({
     description: 'Number of floors',
-    example: 1
+    example: 1,
   })
-  floors: number;
+  floors: number
 
   @ApiProperty({
     description: 'Seats organized by floor',
@@ -68,10 +67,10 @@ export class BusSeatsResDto {
           column: 1,
           floor: 1,
           seatType: 'Standard',
-          isTaken: false
-        }
-      ]
-    }
+          isTaken: false,
+        },
+      ],
+    },
   })
-  seatsByFloor: Record<number, SeatDto[]>;
+  seatsByFloor: Record<number, SeatDto[]>
 }

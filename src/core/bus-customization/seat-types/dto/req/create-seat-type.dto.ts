@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, IsNumber, IsOptional, IsString,  ValidateIf } from 'class-validator'
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateIf,
+} from 'class-validator'
 
 export class CreateSeatTypeReqDto {
   @IsString()
@@ -28,7 +34,6 @@ export class CreateSeatTypeReqDto {
     format: 'float',
   })
   valueToApply: number
-
 
   @ValidateIf(() => false)
   companyId: number
