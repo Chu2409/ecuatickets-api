@@ -12,8 +12,12 @@ import { SearchRoutesDto } from './dto/req/search-routes.dto'
 import { ApiBearerAuth, ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger'
 import { Auth } from '../auth/decorators/auth.decorator'
 import { USER_ROLE } from '../users/types/user-role.enum'
-import { ApiStandardResponse } from 'src/common/decorators/api-standard-response.decorator'
+import {
+  ApiPaginatedResponse,
+  ApiStandardResponse,
+} from 'src/common/decorators/api-standard-response.decorator'
 import { CreateRouteSheetDto } from './dto/req/create-route-sheet'
+import { RouteSheetsFiltersReqDto } from './dto/req/route-sheets-filters.dto'
 
 @Controller('route-sheets')
 @ApiTags('Route Sheets (CUSTOMER, CLERK)')
@@ -60,5 +64,14 @@ export class RouteSheetsController {
   @ApiBody({ type: CreateRouteSheetDto })
   create(@Body() createRouteSheetDto: CreateRouteSheetDto) {
     return this.routeSheetsService.create(createRouteSheetDto)
+  }
+
+  @Get()
+  @ApiOperation({
+    summary: 'Get all route sheets (COMPANY, CLERK)',
+  })
+  @ApiPaginatedResponse(Object)
+  findAll(@Query() paginationDto: RouteSheetsFiltersReqDto) {
+    return this.routeSheetsService.findAll(paginationDto)
   }
 }

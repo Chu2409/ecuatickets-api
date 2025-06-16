@@ -1,53 +1,47 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger'
 
 export class BusCustomizationResDto {
-  
   @ApiProperty({
     description: 'Number of seats added',
-    example: 20
+    example: 20,
   })
-  seatsAdded: number;
+  seatsAdded: number
 
   @ApiProperty({
     description: 'Range of seat numbers added',
-    example: '1 - 20'
+    example: '1 - 20',
   })
-  seatRange: string;
+  seatRange: string
 
   @ApiProperty({
     description: 'Floor where seats were added',
-    example: 1
+    example: 1,
   })
-  floor: number;
+  floor: number
 
   @ApiProperty({
     description: 'Type of seats added',
-    example: 'Standard'
+    example: 'Standard',
   })
-  seatType: string;
+  seatType: string
 }
-
 
 export class BusCustomizationArrayResDto {
   @ApiProperty({
     description: 'Array of seat configuration results',
-    type: [BusCustomizationResDto]
+    type: [BusCustomizationResDto],
   })
-  results: BusCustomizationResDto[];
+  results: BusCustomizationResDto[]
 
   @ApiProperty({
     description: 'Total seats added across all configurations',
-    example: 45
+    example: 45,
   })
-  totalSeatsAdded: number;
+  totalSeatsAdded: number
 
   @ApiProperty({
     description: 'Number of configurations processed',
-    example: 3
+    example: 3,
   })
-  configurationsProcessed: number;
+  configurationsProcessed: number
 }
-
-
-
-

@@ -15,7 +15,6 @@ export class CreateBusCustomizationReqDto {
     description: 'Number of seats to add',
     example: 20,
   })
-  
   @IsInt()
   @IsPositive()
   @IsNotEmpty()
@@ -31,5 +30,4 @@ export class CreateBusCustomizationReqDto {
   @Min(1)
   @Max(2)
   floor: number
-
 }

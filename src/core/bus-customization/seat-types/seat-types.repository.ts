@@ -86,8 +86,8 @@ export class SeatTypesRepository {
     excludeId?: number
   }) {
     const conditions: Prisma.SeatTypeWhereInput = {
-        OR: [],
-        NOT: {},
+      OR: [],
+      NOT: {},
     }
     if (name) {
       conditions.OR?.push({ name })
@@ -106,6 +106,4 @@ export class SeatTypesRepository {
       where: { id },
     })
   }
-
-    
 }

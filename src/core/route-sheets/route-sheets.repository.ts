@@ -4,6 +4,8 @@ import { SearchRoutesDto } from './dto/req/search-routes.dto'
 import { RouteSheet } from '@prisma/client'
 import { ROUTE_STATUS } from './types/route-status.enum'
 import { CreateRouteSheetDto } from './dto/req/create-route-sheet'
+import { FrequencyResDto } from '../frequencies/dto/res/frequency.dto'
+import { RouteSheetsFiltersReqDto } from './dto/req/route-sheets-filters.dto'
 
 @Injectable()
 export class RouteSheetsRepository {
@@ -85,5 +87,37 @@ export class RouteSheetsRepository {
     return await this.dbService.routeSheet.create({
       data: createRouteSheetDto,
     })
+  }
+
+  async findMany(
+    filters: RouteSheetsFiltersReqDto,
+  ): Promise<[FrequencyResDto[], number]> {
+    const { limit, page } = filters
+
+    const [entities, total] = await Promise.all([
+      this.dbService.frequency.findMany({
+        take: limit,
+        skip: (page - 1) * limit,
+        orderBy: {
+          id: 'desc',
+        },
+        include: {
+          origin: true,
+          destination: true,
+          segmentPrices: {
+            include: {
+              origin: true,
+              destination: true,
+            },
+          },
+        },
+        omit: {
+          companyId: true,
+        },
+      }),
+      this.dbService.frequency.count({}),
+    ])
+
+    return [entities, total]
   }
 }

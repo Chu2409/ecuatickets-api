@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger'
 
 export class SeatConfigurationDto {
- 
   @ApiProperty({
     description: 'Seat type name',
     example: 'Standard',

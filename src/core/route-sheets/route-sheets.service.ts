@@ -3,6 +3,7 @@ import { RouteSheetsRepository } from './route-sheets.repository'
 import { SearchRoutesDto } from './dto/req/search-routes.dto'
 import { ROUTE_STATUS } from './types/route-status.enum'
 import { CreateRouteSheetDto } from './dto/req/create-route-sheet'
+import { RouteSheetsFiltersReqDto } from './dto/req/route-sheets-filters.dto'
 
 @Injectable()
 export class RouteSheetsService {
@@ -49,5 +50,17 @@ export class RouteSheetsService {
 
   async create(createRouteSheetDto: CreateRouteSheetDto) {
     return await this.routeSheetsRepository.create(createRouteSheetDto)
+  }
+
+  async findAll(filters: RouteSheetsFiltersReqDto) {
+    const [entities, total] = await this.routeSheetsRepository.findMany(filters)
+
+    return {
+      records: entities,
+      total,
+      limit: filters.limit,
+      page: filters.page,
+      pages: Math.ceil(total / filters.limit),
+    }
   }
 }
