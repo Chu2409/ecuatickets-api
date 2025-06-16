@@ -2,11 +2,10 @@ import { ApiPropertyOptional, PartialType } from '@nestjs/swagger'
 import { CreateBusReqDto } from './create-bus.dto'
 import {
   IsBoolean,
-  IsNumber,
   IsOptional,
-  IsPositive,
   IsString,
   IsUrl,
+  ValidateIf,
 } from 'class-validator'
 
 export class UpdateBusReqDto extends PartialType(CreateBusReqDto) {
@@ -58,12 +57,6 @@ export class UpdateBusReqDto extends PartialType(CreateBusReqDto) {
   })
   isActive?: boolean
 
-  @IsNumber()
-  @IsPositive()
-  @IsOptional()
-  @ApiPropertyOptional({
-    description: 'Company ID that owns the bus',
-    example: 1,
-  })
-  companyId?: number
+  @ValidateIf(() => false)
+  companyId: number
 }

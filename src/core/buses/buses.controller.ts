@@ -11,16 +11,21 @@ import {
 import { BusesService } from './buses.service'
 import { CreateBusReqDto } from './dto/req/create-bus.dto'
 import { UpdateBusReqDto } from './dto/req/update-bus.dto'
-import { ApiOperation, ApiTags } from '@nestjs/swagger'
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import {
   ApiPaginatedResponse,
   ApiStandardResponse,
 } from 'src/common/decorators/api-standard-response.decorator'
 import { BusResDto } from './dto/res/bus.dto'
 import { BusFiltersReqDto } from './dto/req/bus-filters.dto'
+import { GetCompanyId } from '../auth/decorators/get-company-id.decorator'
+import { Auth } from '../auth/decorators/auth.decorator'
+import { USER_ROLE } from '../users/types/user-role.enum'
 
-@ApiTags('Buses')
+@ApiTags('Buses (COMPANY)')
 @Controller('buses')
+@ApiBearerAuth()
+@Auth(USER_ROLE.COMPANY)
 export class BusesController {
   constructor(private readonly service: BusesService) {}
 
@@ -29,26 +34,36 @@ export class BusesController {
     summary: 'Create a new bus',
   })
   @ApiStandardResponse()
-  create(@Body() dto: CreateBusReqDto) {
+  create(@Body() dto: CreateBusReqDto, @GetCompanyId() companyId: number) {
+    dto.companyId = companyId
     return this.service.create(dto)
   }
 
   @Get()
   @ApiOperation({
-    summary: 'Get all buses',
+    summary: 'Get all buses (COMPANY, CLERK)',
   })
+  @Auth(USER_ROLE.COMPANY, USER_ROLE.CLERK)
   @ApiPaginatedResponse(BusResDto)
-  findAll(@Query() paginationDto: BusFiltersReqDto) {
+  findAll(
+    @Query() paginationDto: BusFiltersReqDto,
+    @GetCompanyId() companyId: number,
+  ) {
+    paginationDto.companyId = companyId
     return this.service.findAll(paginationDto)
   }
 
   @Get(':id')
   @ApiOperation({
-    summary: 'Get a bus by id',
+    summary: 'Get a bus by id (COMPANY, CLERK)',
   })
+  @Auth(USER_ROLE.COMPANY, USER_ROLE.CLERK)
   @ApiStandardResponse(BusResDto)
-  findById(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findOne(id)
+  findById(
+    @Param('id', ParseIntPipe) id: number,
+    @GetCompanyId() companyId: number,
+  ) {
+    return this.service.findOne(id, companyId)
   }
 
   @Patch(':id')
@@ -56,7 +71,12 @@ export class BusesController {
     summary: 'Update a bus by id',
   })
   @ApiStandardResponse()
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateBusReqDto) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateBusReqDto,
+    @GetCompanyId() companyId: number,
+  ) {
+    dto.companyId = companyId
     return this.service.update(id, dto)
   }
 
@@ -65,7 +85,10 @@ export class BusesController {
     summary: 'Change the status of a bus by id',
   })
   @ApiStandardResponse()
-  changeStatus(@Param('id', ParseIntPipe) id: number) {
-    return this.service.changeStatus(id)
+  changeStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @GetCompanyId() companyId: number,
+  ) {
+    return this.service.changeStatus(id, companyId)
   }
 }

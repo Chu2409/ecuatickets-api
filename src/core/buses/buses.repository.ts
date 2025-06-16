@@ -11,9 +11,11 @@ export class BusesRepository {
   constructor(private readonly dbService: DatabaseService) {}
 
   async findMany(filters: BusFiltersReqDto): Promise<[BusResDto[], number]> {
-    const { limit, page, search } = filters
+    const { limit, page, search, companyId } = filters
 
-    const whereClause: Prisma.BusWhereInput = {}
+    const whereClause: Prisma.BusWhereInput = {
+      companyId: companyId ?? undefined,
+    }
 
     if (search) {
       whereClause.OR = [
@@ -46,9 +48,9 @@ export class BusesRepository {
     return [entities, total]
   }
 
-  async findById(id: number) {
+  async findById(id: number, companyId: number) {
     return this.dbService.bus.findUnique({
-      where: { id },
+      where: { id, companyId },
     })
   }
 

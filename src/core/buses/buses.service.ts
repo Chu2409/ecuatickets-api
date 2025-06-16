@@ -32,7 +32,7 @@ export class BusesService {
   }
 
   async update(id: number, dto: UpdateBusReqDto) {
-    await this.findOne(id)
+    await this.findOne(id, dto.companyId)
 
     if (dto.licensePlate) {
       await this.validateBusUniqueness({
@@ -46,18 +46,18 @@ export class BusesService {
     return !!entity
   }
 
-  async findOne(id: number) {
-    const found = await this.repository.findById(id)
+  async findOne(id: number, companyId: number) {
+    const found = await this.repository.findById(id, companyId)
 
     if (!found) {
-      throw new NotFoundException(`Bus with id ${id} not found`)
+      throw new NotFoundException(`Company bus with id ${id} not found`)
     }
 
     return found
   }
 
-  async remove(id: number) {
-    await this.findOne(id) // Verify user exists
+  async remove(id: number, companyId: number) {
+    await this.findOne(id, companyId) // Verify user exists
 
     const deleted = await this.repository.remove(id)
 
@@ -86,8 +86,8 @@ export class BusesService {
     }
   }
 
-  async changeStatus(id: number) {
-    const found = await this.findOne(id) // Verify user exists
+  async changeStatus(id: number, companyId: number) {
+    const found = await this.findOne(id, companyId) // Verify user exists
 
     const entity = await this.repository.changeStatus(id, !found.isActive)
 

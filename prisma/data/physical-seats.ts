@@ -1,25 +1,23 @@
 import { Prisma } from '@prisma/client'
 
 export const physicalSeats: Prisma.PhysicalSeatCreateManyInput[] = [
-  // Bus 1 (Total 56 asientos: 48 Normal, 4 VIP, 4 Discapacitados)
+  // Bus 1 (Total 56 asientos: 48 Normal, 8 VIP)
   // 14 filas (4 columnas x 14 filas = 56 asientos)
   ...generateSeatsForBus({
     busId: 1,
     normalSeats: 48,
-    vipSeats: 4,
-    disabledSeats: 4,
+    vipSeats: 8,
     rows: 14,
     columns: 4,
     floor: 1,
   }),
 
-  // Bus 2 (Total 48 asientos: 43 Normal, 2 VIP, 3 Discapacitados)
+  // Bus 2 (Total 48 asientos: 43 Normal, 5 VIP)
   // 12 filas (4 columnas x 12 filas = 48 asientos)
   ...generateSeatsForBus({
     busId: 2,
     normalSeats: 43,
-    vipSeats: 2,
-    disabledSeats: 3,
+    vipSeats: 5,
     rows: 12,
     columns: 4,
     floor: 1,
@@ -31,7 +29,6 @@ function generateSeatsForBus(options: {
   busId: number
   normalSeats: number
   vipSeats: number
-  disabledSeats: number
   rows: number
   columns: number
   floor: number
@@ -49,16 +46,8 @@ function generateSeatsForBus(options: {
     { row: 1, column: 4 },
   ].slice(0, options.vipSeats)
 
-  const disabledPositions = [
-    { row: 2, column: 1 },
-    { row: 2, column: 4 },
-    { row: 3, column: 1 },
-    { row: 3, column: 4 },
-  ].slice(0, options.disabledSeats)
-
   let normalCount = 0
   let vipCount = 0
-  let disabledCount = 0
 
   for (let row = 1; row <= options.rows; row++) {
     for (let col = 1; col <= options.columns; col++) {
@@ -76,19 +65,12 @@ function generateSeatsForBus(options: {
       const isVip = vipPositions.some(
         (pos) => pos.row === row && pos.column === col,
       )
-      // Verificar si es asiento para discapacitados
-      const isDisabled = disabledPositions.some(
-        (pos) => pos.row === row && pos.column === col,
-      )
 
       let seatTypeId = 1 // Normal por defecto
 
       if (isVip && vipCount < options.vipSeats) {
         seatTypeId = 2 // VIP
         vipCount++
-      } else if (isDisabled && disabledCount < options.disabledSeats) {
-        seatTypeId = 3 // Discapacitados
-        disabledCount++
       } else {
         normalCount++
       }

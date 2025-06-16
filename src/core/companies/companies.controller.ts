@@ -11,22 +11,26 @@ import {
 import { CompaniesService } from './companies.service'
 import { CreateCompanyReqDto } from './dto/req/create-company.dto'
 import { UpdateCompanyReqDto } from './dto/req/update-company.dto'
-import { ApiOperation, ApiTags } from '@nestjs/swagger'
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import {
   ApiPaginatedResponse,
   ApiStandardResponse,
 } from 'src/common/decorators/api-standard-response.decorator'
 import { CompanyResDto } from './dto/res/compy.dto'
 import { CompanyFiltersReqDto } from './dto/req/company-filters.dto'
+import { Auth } from '../auth/decorators/auth.decorator'
+import { USER_ROLE } from '../users/types/user-role.enum'
 
-@ApiTags('Companies')
+@ApiTags('Companies (ADMIN)')
 @Controller('companies')
+@ApiBearerAuth()
+@Auth(USER_ROLE.ADMIN)
 export class CompaniesController {
   constructor(private readonly service: CompaniesService) {}
 
   @Post()
   @ApiOperation({
-    summary: 'Create a new user',
+    summary: 'Create a new company',
   })
   @ApiStandardResponse()
   create(@Body() dto: CreateCompanyReqDto) {
@@ -35,7 +39,7 @@ export class CompaniesController {
 
   @Get()
   @ApiOperation({
-    summary: 'Get all users',
+    summary: 'Get all companies',
   })
   @ApiPaginatedResponse(CompanyResDto)
   findAll(@Query() paginationDto: CompanyFiltersReqDto) {
@@ -44,7 +48,7 @@ export class CompaniesController {
 
   @Get(':id')
   @ApiOperation({
-    summary: 'Get a user by id',
+    summary: 'Get a company by id',
   })
   @ApiStandardResponse(CompanyResDto)
   findById(@Param('id', ParseIntPipe) id: number) {
@@ -53,7 +57,7 @@ export class CompaniesController {
 
   @Patch(':id')
   @ApiOperation({
-    summary: 'Update a user by id',
+    summary: 'Update a company by id',
   })
   @ApiStandardResponse()
   update(
@@ -65,7 +69,7 @@ export class CompaniesController {
 
   @Patch(':id/change-status')
   @ApiOperation({
-    summary: 'Change the status of a user by id',
+    summary: 'Change the status of a company by id',
   })
   @ApiStandardResponse()
   changeStatus(@Param('id', ParseIntPipe) id: number) {

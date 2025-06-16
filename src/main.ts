@@ -8,13 +8,19 @@ import { CustomConfigService } from './global/config/config.service'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { ApiPaginatedRes, ApiRes } from './common/dtos/res/api-response.dto'
 import { BaseParamsReqDto } from './common/dtos/req/base-params.dto'
+import { join } from 'path'
+import { NestExpressApplication } from '@nestjs/platform-express'
+import { existsSync, mkdirSync } from 'fs'
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true })
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    cors: true,
+  })
+
   const configService = app.get(CustomConfigService)
   const port = configService.env.PORT
 
-  app.enableCors('*')
+  app.enableCors()
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -32,14 +38,22 @@ async function bootstrap() {
   })
   app.setGlobalPrefix('api')
 
+  const uploadsPath = join(__dirname, '..', '..', 'uploads', 'images')
+
+  if (!existsSync(uploadsPath)) {
+    mkdirSync(uploadsPath, { recursive: true })
+    Logger.log(`Created uploads directory at: ${uploadsPath}`, 'Bootstrap')
+  }
+
+  app.useStaticAssets(uploadsPath, {
+    prefix: '/uploads/images/',
+  })
+
   const config = new DocumentBuilder()
     .setTitle('EcuaTickets API')
-    .setDescription(
-      'Complete API documentation for EcuaTickets. This API is designed to provide a seamless experience for developers and users alike. It includes endpoints for authentication, user management and more.',
-    )
+    .setDescription('Complete API documentation for EcuaTickets...')
     .setVersion('1.0')
     .addServer(`http://localhost:${port}`, 'Local server')
-    // .addServer('https://api.produccion.com', 'Production server')
     .addBearerAuth({
       type: 'http',
       scheme: 'bearer',
@@ -57,8 +71,8 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document, {
     swaggerOptions: {
       persistAuthorization: true,
-      docExpansion: 'none', // 'list', 'full', 'none'
-      operationsSorter: 'method', // 'alpha', 'method'
+      docExpansion: 'none',
+      operationsSorter: 'method',
       tagsSorter: 'alpha',
       defaultModelsExpandDepth: 1,
       defaultModelExpandDepth: 1,
@@ -69,7 +83,6 @@ async function bootstrap() {
       },
     },
     customSiteTitle: 'EcuaTickets API Documentation',
-    // customfavIcon: 'https://nestjs.com/favicon.ico',
     customCss: `
       .swagger-ui .information-container { padding: 20px 0 }
       .swagger-ui .scheme-container { padding: 15px 0 }

@@ -7,6 +7,15 @@ import { AuthModule } from './core/auth/auth.module'
 import { CompaniesModule } from './core/companies/companies.module'
 import { CitiesModule } from './core/cities/cities.module'
 import { BusesModule } from './core/buses/buses.module'
+import { CustomizationsModule } from './core/customizations/customizations.module'
+import { EmailModule } from './core/email/email.module'
+import { TicketSaleModule } from './core/ticket-sale/ticket-sale.module'
+import { PaypalModule } from './core/paypal/paypal.module'
+import { RouteSheetsModule } from './core/route-sheets/route-sheets.module'
+import { FrequenciesModule } from './core/frequencies/frequencies.module'
+import { SeatTypesModule } from './core/bus-customization/seat-types/seat-types.module'
+import { BusCustomizationModule } from './core/bus-customization/bus-customization.module'
+import { FrequencySegmentsModule } from './core/frequency-segments/frequency-segments.module'
 
 @Module({
   imports: [
@@ -17,6 +26,15 @@ import { BusesModule } from './core/buses/buses.module'
     CompaniesModule,
     CitiesModule,
     BusesModule,
+    CustomizationsModule,
+    EmailModule,
+    TicketSaleModule,
+    PaypalModule,
+    RouteSheetsModule,
+    FrequenciesModule,
+    SeatTypesModule,
+    BusCustomizationModule,
+    FrequencySegmentsModule,
   ],
   providers: [ResponseInterceptor],
 })
