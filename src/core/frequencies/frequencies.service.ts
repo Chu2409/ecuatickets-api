@@ -63,7 +63,7 @@ export class FrequenciesService {
   }
 
   async remove(id: number, companyId: number) {
-    await this.findOne(id, companyId) 
+    await this.findOne(id, companyId)
     const deleted = await this.repository.remove(id)
 
     return !!deleted
@@ -99,7 +99,7 @@ export class FrequenciesService {
   }
 
   async changeStatus(id: number, companyId: number) {
-    const found = await this.findOne(id, companyId) 
+    const found = await this.findOne(id, companyId)
 
     const entity = await this.repository.changeStatus(id, !found.active)
 

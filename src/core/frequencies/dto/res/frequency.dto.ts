@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { CityResDto } from 'src/core/cities/dto/res/city.dto'
+import { FrequencySegmentResDto } from 'src/core/frequency-segments/dto/res/frequency-segment.dto'
 
 export class FrequencyResDto {
   @ApiProperty({
@@ -43,4 +44,10 @@ export class FrequencyResDto {
     type: CityResDto,
   })
   destination: CityResDto
+
+  @ApiProperty({
+    description: 'Segment prices',
+    type: [FrequencySegmentResDto],
+  })
+  segmentPrices: FrequencySegmentResDto[]
 }

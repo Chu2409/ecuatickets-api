@@ -15,6 +15,7 @@ import { RouteSheetsModule } from './core/route-sheets/route-sheets.module'
 import { FrequenciesModule } from './core/frequencies/frequencies.module'
 import { SeatTypesModule } from './core/bus-customization/seat-types/seat-types.module'
 import { BusCustomizationModule } from './core/bus-customization/bus-customization.module'
+import { FrequencySegmentsModule } from './core/frequency-segments/frequency-segments.module'
 
 @Module({
   imports: [
@@ -32,7 +33,8 @@ import { BusCustomizationModule } from './core/bus-customization/bus-customizati
     RouteSheetsModule,
     FrequenciesModule,
     SeatTypesModule,
-    BusCustomizationModule
+    BusCustomizationModule,
+    FrequencySegmentsModule,
   ],
   providers: [ResponseInterceptor],
 })
