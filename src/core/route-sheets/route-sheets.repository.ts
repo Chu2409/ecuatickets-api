@@ -62,7 +62,6 @@ export class RouteSheetsRepository {
     return await this.dbService.physicalSeat.findMany({
       where: {
         busId: routeSheet?.busId,
-        isTaken: false,
       },
       include: {
         seatType: true,
