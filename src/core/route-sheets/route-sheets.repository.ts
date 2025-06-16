@@ -95,21 +95,25 @@ export class RouteSheetsRepository {
     const { limit, page } = filters
 
     const [entities, total] = await Promise.all([
-      this.dbService.frequency.findMany({
+      this.dbService.routeSheet.findMany({
         take: limit,
         skip: (page - 1) * limit,
         orderBy: {
           id: 'desc',
         },
         include: {
-          origin: true,
-          destination: true,
+          frequency: {
+            include: {
+              origin: true,
+              destination: true,
+            },
+          },
         },
         omit: {
-          companyId: true,
+          frequencyId: true,
         },
       }),
-      this.dbService.frequency.count({}),
+      this.dbService.routeSheet.count({}),
     ])
 
     return [entities, total]
