@@ -1,10 +1,19 @@
-import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common'
+import {
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+  Body,
+} from '@nestjs/common'
 import { RouteSheetsService } from './route-sheets.service'
 import { SearchRoutesDto } from './dto/req/search-routes.dto'
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
+import { ApiBearerAuth, ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger'
 import { Auth } from '../auth/decorators/auth.decorator'
 import { USER_ROLE } from '../users/types/user-role.enum'
 import { ApiStandardResponse } from 'src/common/decorators/api-standard-response.decorator'
+import { CreateRouteSheetDto } from './dto/req/create-route-sheet'
 
 @Controller('route-sheets')
 @ApiTags('Route Sheets (CUSTOMER, CLERK)')
@@ -41,5 +50,15 @@ export class RouteSheetsController {
     @Query('seatId', ParseIntPipe) seatId?: number,
   ) {
     return this.routeSheetsService.validateAvailability(id, seatId)
+  }
+
+  @Post()
+  @ApiOperation({
+    summary: 'Create a route sheet',
+  })
+  @ApiStandardResponse()
+  @ApiBody({ type: CreateRouteSheetDto })
+  create(@Body() createRouteSheetDto: CreateRouteSheetDto) {
+    return this.routeSheetsService.create(createRouteSheetDto)
   }
 }

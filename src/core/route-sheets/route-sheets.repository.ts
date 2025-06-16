@@ -3,6 +3,7 @@ import { DatabaseService } from 'src/global/database/database.service'
 import { SearchRoutesDto } from './dto/req/search-routes.dto'
 import { RouteSheet } from '@prisma/client'
 import { ROUTE_STATUS } from './types/route-status.enum'
+import { CreateRouteSheetDto } from './dto/req/create-route-sheet'
 
 @Injectable()
 export class RouteSheetsRepository {
@@ -77,6 +78,12 @@ export class RouteSheetsRepository {
           },
         },
       },
+    })
+  }
+
+  async create(createRouteSheetDto: CreateRouteSheetDto) {
+    return await this.dbService.routeSheet.create({
+      data: createRouteSheetDto,
     })
   }
 }
