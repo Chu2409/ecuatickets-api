@@ -34,7 +34,10 @@ export class FrequenciesController {
     summary: 'Create a new frequency',
   })
   @ApiStandardResponse()
-  create(@Body() dto: CreateFrequencyReqDto, @GetCompanyId() companyId: number) {
+  create(
+    @Body() dto: CreateFrequencyReqDto,
+    @GetCompanyId() companyId: number,
+  ) {
     dto.companyId = companyId
     return this.service.create(dto)
   }

@@ -10,7 +10,9 @@ import { UpdateFrequencyReqDto } from './dto/req/update-frequency.dto'
 export class FrequenciesRepository {
   constructor(private readonly dbService: DatabaseService) {}
 
-  async findMany(filters: FrequencyFiltersReqDto): Promise<[FrequencyResDto[], number]> {
+  async findMany(
+    filters: FrequencyFiltersReqDto,
+  ): Promise<[FrequencyResDto[], number]> {
     const { limit, page, search, companyId } = filters
 
     const whereClause: Prisma.FrequencyWhereInput = {
@@ -59,8 +61,14 @@ export class FrequenciesRepository {
           id: 'desc',
         },
         include: {
-          origin: true,      
-          destination: true, 
+          origin: true,
+          destination: true,
+          segmentPrices: {
+            include: {
+              origin: true,
+              destination: true,
+            },
+          },
         },
         omit: {
           companyId: true,
@@ -78,8 +86,14 @@ export class FrequenciesRepository {
     return this.dbService.frequency.findUnique({
       where: { id, companyId },
       include: {
-        origin: true,      
-        destination: true, 
+        origin: true,
+        destination: true,
+        segmentPrices: {
+          include: {
+            origin: true,
+            destination: true,
+          },
+        },
       },
     })
   }
