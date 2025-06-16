@@ -11,94 +11,82 @@ import {
 } from 'class-validator'
 import { PASSENGER_TYPE } from '../../types/passenger-type'
 import { Type } from 'class-transformer'
+import { PassengerType } from '@prisma/client'
 
 export class TicketInfoDtoReq {
   @ApiProperty({
-    description: 'ID of the frequency segment price',
-    example: 1,
-  })
-  @IsNumber()
-  @IsNotEmpty()
-  frecuencySegmentPriceId: number
-
-  @ApiProperty({
-    description: 'Date of the ticket',
-    example: new Date(),
-  })
-  @IsDate()
-  @Type(() => Date)
-  @IsNotEmpty()
-  date: Date
-
-  @ApiProperty({
-    description: 'ID of the physical seat',
-    example: 1,
-  })
-  @IsNumber()
-  @IsNotEmpty()
-  physicalSeatId: number
-
-  @ApiProperty({
-    description: 'Type of passenger',
-    enum: PASSENGER_TYPE,
-    example: PASSENGER_TYPE.NORMAL,
-  })
-  @IsEnum(PASSENGER_TYPE)
-  @IsNotEmpty()
-  passengerType: PASSENGER_TYPE
-
-  @ApiProperty({
-    description: 'ID of the passenger',
-    example: 1,
+    description: 'ID del pasajero (opcional). Si no se proporciona, se creará un nuevo pasajero',
     required: false,
   })
-  @IsNumber()
   @IsOptional()
+  @IsNumber()
   passengerId?: number
 
   @ApiProperty({
-    description: 'Passenger DNI',
+    description: 'DNI del pasajero. Si el pasajero ya existe, se usará su información',
     example: '1234567890',
   })
-  @ValidateIf((o) => !o.passengerId)
   @IsString()
-  @IsNotEmpty()
   passsengerDni: string
 
   @ApiProperty({
-    description: 'Passenger name',
+    description: 'Nombre del pasajero',
     example: 'John',
   })
-  @ValidateIf((o) => !o.passengerId)
   @IsString()
-  @IsNotEmpty()
   passengerName: string
 
   @ApiProperty({
-    description: 'Passenger surname',
+    description: 'Apellido del pasajero',
     example: 'Doe',
   })
-  @ValidateIf((o) => !o.passengerId)
   @IsString()
-  @IsNotEmpty()
   passengerSurname: string
 
   @ApiProperty({
-    description: 'Passenger email',
+    description: 'Email del pasajero',
     example: 'john.doe@example.com',
     required: false,
   })
-  @ValidateIf((o) => !o.passengerId)
-  @IsEmail()
   @IsOptional()
+  @IsEmail()
   passengerEmail?: string
 
   @ApiProperty({
-    description: 'Passenger birth date',
+    description: 'Fecha de nacimiento del pasajero',
     example: '1990-01-01',
   })
-  @ValidateIf((o) => !o.passengerId)
-  @IsDate()
   @Type(() => Date)
+  @IsDate()
   passengerBirthDate: Date
+
+  @ApiProperty({
+    description: 'Tipo de pasajero',
+    enum: PassengerType,
+    example: PassengerType.NORMAL,
+  })
+  @IsEnum(PassengerType)
+  passengerType: PassengerType
+
+  @ApiProperty({
+    description: 'ID del precio del segmento de frecuencia',
+    example: 1,
+  })
+  @IsNumber()
+  frecuencySegmentPriceId: number
+
+  @ApiProperty({
+    description: 'Fecha del viaje',
+    example: '2025-06-16T08:35:01.403Z',
+  })
+  @Type(() => Date)
+  @IsDate()
+  date: Date
+
+  @ApiProperty({
+    description: 'ID del asiento físico',
+    example: 1,
+  })
+  @IsNumber()
+  physicalSeatId: number
 }

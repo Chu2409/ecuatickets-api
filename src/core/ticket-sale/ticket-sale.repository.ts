@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { PaymentStatus, Prisma, RouteSheet } from '@prisma/client'
 import { DatabaseService } from 'src/global/database/database.service'
 import { TICKET_STATUS } from './types/ticket-status'
@@ -83,35 +83,50 @@ export class TicketSaleRepository {
       })
 
       for (const { passenger, ...ticket } of tickets) {
-        if (!ticket.passengerId) {
-          const newPassenger = await tx.person.create({
-            data: {
-              birthDate: passenger.birthDate,
-              name: passenger.name,
-              surname: passenger.surname,
-              email: passenger.email,
-              dni: passenger.dni,
-            },
-          })
+        let passengerId = ticket.passengerId;
 
-          await tx.ticket.create({
-            data: {
-              ...ticket,
-              passengerId: newPassenger.id,
-              paymentId: createdPayment.id,
-            },
-          })
+        // Si no hay passengerId, buscar por DNI
+        if (!passengerId) {
+          const existingPassenger = await tx.person.findUnique({
+            where: { dni: passenger.dni }
+          });
+
+          if (existingPassenger) {
+            passengerId = existingPassenger.id;
+          } else {
+            // Si no existe, crear nuevo pasajero
+            const newPassenger = await tx.person.create({
+              data: {
+                birthDate: passenger.birthDate,
+                name: passenger.name,
+                surname: passenger.surname,
+                email: passenger.email,
+                dni: passenger.dni,
+              },
+            });
+            passengerId = newPassenger.id;
+          }
         } else {
-          await tx.ticket.create({
-            data: {
-              ...ticket,
-              passengerId: ticket.passengerId,
-              paymentId: createdPayment.id,
-            },
-          })
+          // Si hay passengerId, verificar que existe
+          const existingPassenger = await tx.person.findUnique({
+            where: { id: passengerId }
+          });
+
+          if (!existingPassenger) {
+            throw new NotFoundException(`Pasajero con ID ${passengerId} no encontrado`);
+          }
         }
+
+        // Crear el ticket con el passengerId (existente o nuevo)
+        await tx.ticket.create({
+          data: {
+            ...ticket,
+            passengerId,
+            paymentId: createdPayment.id,
+          },
+        });
       }
-    })
+    });
     return createdPayment;
   }
 

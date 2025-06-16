@@ -22,24 +22,30 @@ export class OnlineSalesService {
     private readonly ticketSaleRepository: TicketSaleRepository,
     private readonly emailService: EmailService,
     private readonly paypalService: PayPalService,
-  ) { }
+  ) {}
 
   public async processOnlineSale(dto: CreateOnlineSaleDto) {
     const ticketsData = await this.prepareTicketsData(dto.tickets)
     const paymentData = this.preparePaymentData(ticketsData, dto)
 
     // Create payment and tickets in PENDING status
-    const payment = await this.ticketSaleRepository.createPayment(ticketsData, paymentData)
+    const payment = await this.ticketSaleRepository.createPayment(
+      ticketsData,
+      paymentData,
+    )
 
     // Handle PayPal payment flow
     if (dto.paymentMethod === PAYMENT_METHOD.PAYPAL) {
-      const paypalOrder = await this.paypalService.createOrder(paymentData.total.toString())
+      const paypalOrder = await this.paypalService.createOrder(
+        paymentData.total.toString(),
+      )
       return {
         success: true,
         message: 'PayPal order created successfully',
         paymentId: payment.id,
         paypalOrderId: paypalOrder.id,
-        approvalUrl: paypalOrder.links.find(link => link.rel === 'approve').href
+        approvalUrl: paypalOrder.links.find((link) => link.rel === 'approve')
+          .href,
       }
     }
 
@@ -61,12 +67,13 @@ export class OnlineSalesService {
       if (captureResult.status === 'COMPLETED') {
         const payment = await this.ticketSaleRepository.updatePaymentStatus(
           paymentId,
-          PAYMENT_STATUS.APPROVED
+          PAYMENT_STATUS.APPROVED,
         )
 
         // Update physical seats status
-        const tickets = await this.ticketSaleRepository.findTicketsByPaymentId(paymentId)
-        const physicalSeats = tickets.map(ticket => ticket.physicalSeatId)
+        const tickets =
+          await this.ticketSaleRepository.findTicketsByPaymentId(paymentId)
+        const physicalSeats = tickets.map((ticket) => ticket.physicalSeatId)
         await this.ticketSaleRepository.updatePhysicalSeatsStatus(physicalSeats)
 
         // Send confirmation email if user has an email
@@ -74,7 +81,7 @@ export class OnlineSalesService {
           await this.emailService.sendEmail(
             payment.user.person.email,
             payment.total,
-            new Date().toISOString()
+            new Date().toISOString(),
           )
         }
 
@@ -82,15 +89,17 @@ export class OnlineSalesService {
           success: true,
           message: 'Pago verificado y procesado correctamente',
           payment,
-          tickets
+          tickets,
         }
       }
 
-      throw new BadRequestException('El pago de PayPal no se completó correctamente')
+      throw new BadRequestException(
+        'El pago de PayPal no se completó correctamente',
+      )
     } catch (error) {
       await this.ticketSaleRepository.updatePaymentStatus(
         paymentId,
-        PAYMENT_STATUS.REJECTED
+        PAYMENT_STATUS.REJECTED,
       )
       throw new BadRequestException('Error al verificar el pago de PayPal')
     }
