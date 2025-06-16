@@ -91,7 +91,7 @@ export class RouteSheetsRepository {
 
   async findMany(
     filters: RouteSheetsFiltersReqDto,
-  ): Promise<[FrequencyResDto[], number]> {
+  ): Promise<[object[], number]> {
     const { limit, page } = filters
 
     const [entities, total] = await Promise.all([
@@ -104,12 +104,6 @@ export class RouteSheetsRepository {
         include: {
           origin: true,
           destination: true,
-          segmentPrices: {
-            include: {
-              origin: true,
-              destination: true,
-            },
-          },
         },
         omit: {
           companyId: true,
