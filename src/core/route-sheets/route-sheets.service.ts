@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common'
 import { RouteSheetsRepository } from './route-sheets.repository'
 import { SearchRoutesDto } from './dto/req/search-routes.dto'
 import { ROUTE_STATUS } from './types/route-status.enum'
+import { CreateRouteSheetDto } from './dto/req/create-route-sheet'
 
 @Injectable()
 export class RouteSheetsService {
@@ -44,5 +45,9 @@ export class RouteSheetsService {
     }
 
     return true
+  }
+
+  async create(createRouteSheetDto: CreateRouteSheetDto) {
+    return await this.routeSheetsRepository.create(createRouteSheetDto)
   }
 }
