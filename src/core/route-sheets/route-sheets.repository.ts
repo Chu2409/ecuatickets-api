@@ -66,6 +66,9 @@ export class RouteSheetsRepository {
       include: {
         seatType: true,
       },
+      orderBy: {
+        id: 'asc',
+      },
     })
   }
 

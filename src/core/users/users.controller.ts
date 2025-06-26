@@ -21,6 +21,7 @@ import { BaseUserResDto } from './dto/res/user.dto'
 import { UserFiltersReqDto } from './dto/req/user-filters.dto'
 import { USER_ROLE } from './types/user-role.enum'
 import { Auth } from '../auth/decorators/auth.decorator'
+import { GetCompanyId } from '../auth/decorators/get-company-id.decorator'
 
 @ApiTags('Users (ADMIN)')
 @Controller('users')
@@ -34,7 +35,9 @@ export class UsersController {
     summary: 'Create a new user',
   })
   @ApiStandardResponse()
-  create(@Body() dto: CreateUserReqDto) {
+  @Auth(USER_ROLE.COMPANY)
+  create(@Body() dto: CreateUserReqDto, @GetCompanyId() companyId: number) {
+    dto.companyId = companyId
     return this.service.create(dto)
   }
 

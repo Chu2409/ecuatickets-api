@@ -16,6 +16,7 @@ import { GetUser } from './decorators/get-user.decorator'
 import { User } from '@prisma/client'
 import { USER_ROLE } from '../users/types/user-role.enum'
 import { BaseUserResDto } from '../users/dto/res/user.dto'
+import { RegisterUserReqDto } from './dto/req/register-user.dto'
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -31,6 +32,16 @@ export class AuthController {
   @ApiStandardResponse(SignInResDto, HttpStatus.OK)
   async login(@Body() dto: SignInReqDto) {
     return this.service.login(dto)
+  }
+
+  @Post('register')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Register',
+  })
+  @ApiStandardResponse()
+  async register(@Body() dto: RegisterUserReqDto) {
+    return this.service.register(dto)
   }
 
   @Get('me')

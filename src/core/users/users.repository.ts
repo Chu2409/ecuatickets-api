@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client'
 import { CreateUserReqDto } from './dto/req/create-user.dto'
 import { UpdateUserReqDto } from './dto/req/update-user.dto'
 import { BaseUserResDto } from './dto/res/user.dto'
+import { RegisterUserReqDto } from '../auth/dto/req/register-user.dto'
 
 @Injectable()
 export class UsersRepository {
@@ -148,11 +149,13 @@ export class UsersRepository {
         password: userData.password,
         role: userData.role,
         isActive: userData.isActive,
-        company: {
-          connect: {
-            id: userData.companyId,
+        ...(userData.companyId && {
+          company: {
+            connect: {
+              id: userData.companyId,
+            },
           },
-        },
+        }),
         person: {
           create: {
             ...userData.person,
