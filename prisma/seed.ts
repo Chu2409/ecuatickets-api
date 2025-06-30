@@ -12,6 +12,7 @@ import { routeSheets } from './data/route-sheets'
 import { people } from './data/people'
 import { intermediateStops } from './data/intermediate-stops'
 import { frequencySegments } from './data/frequency-segments'
+import { seatTemplates, templateSeats } from './data/seat-templates'
 
 const prisma = new PrismaClient()
 
@@ -38,6 +39,14 @@ const main = async () => {
 
   await prisma.seatType.createMany({
     data: seatTypes,
+  })
+
+  await prisma.seatTemplate.createMany({
+    data: seatTemplates,
+  })
+
+  await prisma.templateSeat.createMany({
+    data: templateSeats,
   })
 
   await prisma.seatConfiguration.createMany({

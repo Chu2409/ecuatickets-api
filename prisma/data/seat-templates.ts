@@ -1,0 +1,150 @@
+export const seatTemplates = [
+  {
+    id: 1,
+    name: 'Estandar',
+    description: 'Plantilla estándar para bus de 40 asientos en una sola planta',
+    totalSeats: 40,
+    rows: 10,
+    columns: 4,
+    floors: 1,
+    isActive: true,
+    createdAt: new Date(),
+  },
+  {
+    id: 2,
+    name: 'VIP',
+    description: 'Plantilla VIP para bus de 28 asientos con mayor espacio',
+    totalSeats: 28,
+    rows: 7,
+    columns: 4,
+    floors: 1,
+    isActive: true,
+    createdAt: new Date(),
+  },
+  {
+    id: 3,
+    name: 'Doble Piso',
+    description: 'Plantilla para bus de doble piso con 60 asientos totales',
+    totalSeats: 60,
+    rows: 15,
+    columns: 4,
+    floors: 2,
+    isActive: true,
+    createdAt: new Date(),
+  },
+]
+
+export const templateSeats = [
+  // Bus Estándar 40 Asientos (ID: 1)
+  // Fila 1
+  { templateId: 1, seatNumber: '1A', row: 1, column: 1, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '1B', row: 1, column: 2, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '1C', row: 1, column: 3, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '1D', row: 1, column: 4, floor: 1, isAisle: false },
+  // Fila 2
+  { templateId: 1, seatNumber: '2A', row: 2, column: 1, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '2B', row: 2, column: 2, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '2C', row: 2, column: 3, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '2D', row: 2, column: 4, floor: 1, isAisle: false },
+  // Fila 3
+  { templateId: 1, seatNumber: '3A', row: 3, column: 1, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '3B', row: 3, column: 2, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '3C', row: 3, column: 3, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '3D', row: 3, column: 4, floor: 1, isAisle: false },
+  // Fila 4
+  { templateId: 1, seatNumber: '4A', row: 4, column: 1, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '4B', row: 4, column: 2, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '4C', row: 4, column: 3, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '4D', row: 4, column: 4, floor: 1, isAisle: false },
+  // Fila 5
+  { templateId: 1, seatNumber: '5A', row: 5, column: 1, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '5B', row: 5, column: 2, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '5C', row: 5, column: 3, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '5D', row: 5, column: 4, floor: 1, isAisle: false },
+  // Fila 6
+  { templateId: 1, seatNumber: '6A', row: 6, column: 1, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '6B', row: 6, column: 2, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '6C', row: 6, column: 3, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '6D', row: 6, column: 4, floor: 1, isAisle: false },
+  // Fila 7
+  { templateId: 1, seatNumber: '7A', row: 7, column: 1, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '7B', row: 7, column: 2, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '7C', row: 7, column: 3, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '7D', row: 7, column: 4, floor: 1, isAisle: false },
+  // Fila 8
+  { templateId: 1, seatNumber: '8A', row: 8, column: 1, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '8B', row: 8, column: 2, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '8C', row: 8, column: 3, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '8D', row: 8, column: 4, floor: 1, isAisle: false },
+  // Fila 9
+  { templateId: 1, seatNumber: '9A', row: 9, column: 1, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '9B', row: 9, column: 2, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '9C', row: 9, column: 3, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '9D', row: 9, column: 4, floor: 1, isAisle: false },
+  // Fila 10
+  { templateId: 1, seatNumber: '10A', row: 10, column: 1, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '10B', row: 10, column: 2, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '10C', row: 10, column: 3, floor: 1, isAisle: false },
+  { templateId: 1, seatNumber: '10D', row: 10, column: 4, floor: 1, isAisle: false },
+
+  // Bus VIP 28 Asientos (ID: 2)
+  // Fila 1
+  { templateId: 2, seatNumber: '1A', row: 1, column: 1, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '1B', row: 1, column: 2, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '1C', row: 1, column: 3, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '1D', row: 1, column: 4, floor: 1, isAisle: false },
+  // Fila 2
+  { templateId: 2, seatNumber: '2A', row: 2, column: 1, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '2B', row: 2, column: 2, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '2C', row: 2, column: 3, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '2D', row: 2, column: 4, floor: 1, isAisle: false },
+  // Fila 3
+  { templateId: 2, seatNumber: '3A', row: 3, column: 1, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '3B', row: 3, column: 2, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '3C', row: 3, column: 3, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '3D', row: 3, column: 4, floor: 1, isAisle: false },
+  // Fila 4
+  { templateId: 2, seatNumber: '4A', row: 4, column: 1, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '4B', row: 4, column: 2, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '4C', row: 4, column: 3, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '4D', row: 4, column: 4, floor: 1, isAisle: false },
+  // Fila 5
+  { templateId: 2, seatNumber: '5A', row: 5, column: 1, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '5B', row: 5, column: 2, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '5C', row: 5, column: 3, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '5D', row: 5, column: 4, floor: 1, isAisle: false },
+  // Fila 6
+  { templateId: 2, seatNumber: '6A', row: 6, column: 1, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '6B', row: 6, column: 2, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '6C', row: 6, column: 3, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '6D', row: 6, column: 4, floor: 1, isAisle: false },
+  // Fila 7
+  { templateId: 2, seatNumber: '7A', row: 7, column: 1, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '7B', row: 7, column: 2, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '7C', row: 7, column: 3, floor: 1, isAisle: false },
+  { templateId: 2, seatNumber: '7D', row: 7, column: 4, floor: 1, isAisle: false },
+
+  // Bus Doble Piso 60 Asientos (ID: 3) - Piso 1
+  // Fila 1-15 Piso 1
+  ...Array.from({ length: 15 }, (_, i) => {
+    const row = i + 1;
+    return [
+      { templateId: 3, seatNumber: `${row}A`, row, column: 1, floor: 1, isAisle: false },
+      { templateId: 3, seatNumber: `${row}B`, row, column: 2, floor: 1, isAisle: false },
+      { templateId: 3, seatNumber: `${row}C`, row, column: 3, floor: 1, isAisle: false },
+      { templateId: 3, seatNumber: `${row}D`, row, column: 4, floor: 1, isAisle: false },
+    ];
+  }).flat(),
+
+  // Bus Doble Piso 60 Asientos (ID: 3) - Piso 2
+  // Fila 1-15 Piso 2
+  ...Array.from({ length: 15 }, (_, i) => {
+    const row = i + 1;
+    return [
+      { templateId: 3, seatNumber: `${row}A-2`, row, column: 1, floor: 2, isAisle: false },
+      { templateId: 3, seatNumber: `${row}B-2`, row, column: 2, floor: 2, isAisle: false },
+      { templateId: 3, seatNumber: `${row}C-2`, row, column: 3, floor: 2, isAisle: false },
+      { templateId: 3, seatNumber: `${row}D-2`, row, column: 4, floor: 2, isAisle: false },
+    ];
+  }).flat(),
+] 
