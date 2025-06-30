@@ -7,6 +7,7 @@ import {
   Patch,
   Query,
   BadRequestException,
+  Get,
 } from '@nestjs/common'
 import {
   ApiTags,
@@ -123,6 +124,16 @@ export class TicketSaleController {
   ): Promise<{ message: string }> {
     await this.counterSalesService.rejectPayment(paymentId)
     return { message: 'Pago rechazado exitosamente' }
+  }
+
+  @Get('payments/pending-transfers')
+  @ApiOperation({
+    summary: 'Get pending transfer payments (CLERK)',
+  })
+  @ApiStandardResponse(Boolean)
+  @Auth(USER_ROLE.CUSTOMER, USER_ROLE.CLERK)
+  async getPendingTransferPayments() {
+    return this.counterSalesService.getPendingTransferPayments()
   }
 
   // @Get('customers/:customerId/tickets')

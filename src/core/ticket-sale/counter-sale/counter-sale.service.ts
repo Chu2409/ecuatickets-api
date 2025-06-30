@@ -23,7 +23,7 @@ export class CounterSalesService {
     private readonly emailService: EmailService,
     private readonly prisma: DatabaseService,
     private readonly paypalService: PayPalService,
-  ) {}
+  ) { }
 
   public async processCounterSale(dto: CreateCounterSaleDto) {
     const ticketsData = await this.prepareTicketsData(dto.tickets)
@@ -270,6 +270,17 @@ export class CounterSalesService {
       success: true,
       message: 'Pago rechazado correctamente',
       payment,
+    }
+  }
+
+  public async getPendingTransferPayments() {
+    const payments = await this.ticketSaleRepository.findPendingTransferPayments()
+
+    return {
+      success: true,
+      message: 'Pagos pendientes por transferencia obtenidos correctamente',
+      data: payments,
+      total: payments.length,
     }
   }
 }
