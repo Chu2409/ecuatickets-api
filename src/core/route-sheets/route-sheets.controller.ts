@@ -18,6 +18,9 @@ import {
 } from 'src/common/decorators/api-standard-response.decorator'
 import { CreateRouteSheetDto } from './dto/req/create-route-sheet'
 import { RouteSheetsFiltersReqDto } from './dto/req/route-sheets-filters.dto'
+import { GetUser } from '../auth/decorators/get-user.decorator'
+import { User } from '@prisma/client'
+import { DriverSearchRoutesDto } from './dto/req/driver-search-routes'
 
 @Controller('route-sheets')
 @ApiTags('Route Sheets (CUSTOMER, CLERK)')
@@ -54,6 +57,21 @@ export class RouteSheetsController {
     @Query('seatId', ParseIntPipe) seatId?: number,
   ) {
     return this.routeSheetsService.validateAvailability(id, seatId)
+  }
+
+  @Get('driver')
+  @ApiOperation({
+    summary: 'Get all route sheets for a driver',
+  })
+  @ApiStandardResponse()
+  @Auth(USER_ROLE.DRIVER)
+  getDriverRouteSheets(
+    @GetUser() user: User,
+    @Query() driverSearchRoutesDto: DriverSearchRoutesDto,
+  ) {
+    driverSearchRoutesDto.driverId = user.id
+
+    return this.routeSheetsService.getDriverRouteSheets(driverSearchRoutesDto)
   }
 
   @Post()

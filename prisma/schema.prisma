@@ -77,6 +77,7 @@ model User {
   ticketScans       TicketScan[]
   validatedPayments Payment[]      @relation("PaymentValidatedBy")
   userPayments      Payment[]      @relation("PaymentUser")
+  routeSheets       RouteSheet[]
 
   @@map("users")
 }
@@ -266,10 +267,12 @@ model RouteSheet {
   status RouteStatus @map("status")
   mode   RouteMode   @map("mode")
 
-  frequencyId Int       @map("frequency_id")
-  frequency   Frequency @relation(fields: [frequencyId], references: [id])
-  busId       Int       @map("bus_id")
-  bus         Bus       @relation(fields: [busId], references: [id])
+  frequencyId Int?       @map("frequency_id")
+  frequency   Frequency? @relation(fields: [frequencyId], references: [id])
+  busId       Int        @map("bus_id")
+  bus         Bus        @relation(fields: [busId], references: [id])
+  driverId    Int        @map("driver_id")
+  driver      User       @relation(fields: [driverId], references: [id])
 
   tickets Ticket[]
 

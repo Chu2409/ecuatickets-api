@@ -37,7 +37,7 @@ export class TicketSaleController {
     private readonly counterSalesService: CounterSalesService,
     private readonly onlineSalesService: OnlineSalesService,
     private readonly prisma: DatabaseService,
-  ) { }
+  ) {}
 
   @Post('counter')
   @ApiOperation({
