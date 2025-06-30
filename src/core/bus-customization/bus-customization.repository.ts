@@ -105,11 +105,12 @@ export class BusCustomizationRepository {
     })
   }
 
-  async updateSeatTypeByBusAndSeatNumber(busId: number, seatNumber: string, seatTypeId: number) {
+  async updateSeatTypeByBusAndSeatNumber(busId: number, seatNumber: string, seatTypeId: number, floor: number) {
     return this.dbService.physicalSeat.updateMany({
       where: {
         busId,
         seatNumber,
+        floor,
       },
       data: {
         seatTypeId,

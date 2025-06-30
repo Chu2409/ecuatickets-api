@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common'
 import { BusCustomizationRepository } from './bus-customization.repository'
-import { CreateBusCustomizationReqDto } from './dto/req/create-bus-customization.dto'
+import { CreateBusCustomizationReqDto, UpdateSeatTypeDto } from './dto/req/create-bus-customization.dto'
 import { Prisma } from '@prisma/client'
 import {
   BusCustomizationArrayResDto,
@@ -37,7 +37,6 @@ export class BusCustomizationService {
       const totalSeats = singleConfig.seats ?? singleConfig.quantity ?? typeConfig.seats
       const floors = singleConfig.floors ?? typeConfig.floors
       const quantity = singleConfig.quantity ?? totalSeats
-      const floor = singleConfig.floor ?? 1
 
       const seatTypeId = singleConfig.seatTypeId ?? 1;
       const seatType = await this.repository.findSeatTypeById(seatTypeId);
@@ -47,89 +46,33 @@ export class BusCustomizationService {
         );
       }
 
-      const seatsOnFloor = await this.repository.findBusSeats(busId)
-      const seatsOnSameFloor = seatsOnFloor.filter(
-        (seat) => seat.floor === floor,
-      )
-
-      let nextSeatNumber = 1
-      let startingRow = 1
-
-      if (seatsOnSameFloor.length > 0) {
-        const maxSeatNumber = Math.max(
-          ...seatsOnSameFloor.map((seat) => parseInt(seat.seatNumber)),
-        )
-        nextSeatNumber = maxSeatNumber + 1
-
-        const validRows = seatsOnSameFloor
-          .filter((seat) => seat.row !== null)
-          .map((seat) => seat.row as number)
-
-        if (validRows.length > 0) {
-          const maxRowOnFloor = Math.max(...validRows)
-          const seatsInLastRow = seatsOnSameFloor.filter(
-            (seat) => seat.row === maxRowOnFloor,
-          ).length
-
-          if (seatsInLastRow >= this.SEATS_PER_ROW) {
-            startingRow = maxRowOnFloor + 1
-          } else {
-            startingRow = maxRowOnFloor
-          }
+      // Si es doble piso, dividir asientos entre los pisos
+      if (floors === 2) {
+        const seatsPerFloor = Math.floor(quantity / 2)
+        const extra = quantity % 2
+        const floorConfigs = [
+          { floor: 1, seats: seatsPerFloor + extra },
+          { floor: 2, seats: seatsPerFloor },
+        ]
+        for (const floorConfig of floorConfigs) {
+          await this._addSeatsToFloor(busId, seatTypeId, floorConfig.seats, floorConfig.floor, seatType.name, singleConfig.vipSeats)
+          results.push({
+            seatsAdded: floorConfig.seats,
+            seatRange: '', // Se puede calcular si se requiere
+            floor: floorConfig.floor,
+            seatType: seatType.name,
+          })
         }
-      }
-
-      await this.repository.createSeatConfiguration({
-        busId,
-        seatTypeId,
-        quantity,
-      })
-
-      const physicalSeats: Prisma.PhysicalSeatCreateManyInput[] = []
-      let currentRow = startingRow
-      let seatsInCurrentRow = 0
-
-      if (seatsOnSameFloor.length > 0) {
-        const seatsInCurrentRowOnFloor = seatsOnSameFloor.filter(
-          (seat) => seat.row === currentRow,
-        ).length
-        seatsInCurrentRow = seatsInCurrentRowOnFloor
-      }
-
-      for (let i = 0; i < quantity; i++) {
-        const column = (seatsInCurrentRow % this.SEATS_PER_ROW) + 1
-        const seatNumber = nextSeatNumber.toString()
-        const isVip = singleConfig.vipSeats?.includes(nextSeatNumber) ?? false
-
-        physicalSeats.push({
-          busId,
-          seatTypeId,
-          seatNumber,
-          row: currentRow,
-          column,
+      } else {
+        const floor = singleConfig.floor ?? 1
+        await this._addSeatsToFloor(busId, seatTypeId, quantity, floor, seatType.name, singleConfig.vipSeats)
+        results.push({
+          seatsAdded: quantity,
+          seatRange: '', // Se puede calcular si se requiere
           floor,
-          isTaken: false,
-          // Puedes agregar un campo isVip si tu modelo lo soporta
-          // isVip,
+          seatType: seatType.name,
         })
-
-        seatsInCurrentRow++
-        nextSeatNumber++
-
-        if (seatsInCurrentRow >= this.SEATS_PER_ROW) {
-          currentRow++
-          seatsInCurrentRow = 0
-        }
       }
-
-      await this.repository.createManyPhysicalSeats(physicalSeats)
-
-      results.push({
-        seatsAdded: quantity,
-        seatRange: `${physicalSeats[0].seatNumber} - ${physicalSeats[physicalSeats.length - 1].seatNumber}`,
-        floor,
-        seatType: seatType.name,
-      })
     }
 
     return {
@@ -140,6 +83,66 @@ export class BusCustomizationService {
       ),
       configurationsProcessed: results.length,
     }
+  }
+
+  private async _addSeatsToFloor(busId: number, seatTypeId: number, quantity: number, floor: number, seatTypeName: string, vipSeats?: number[]) {
+    const seatsOnFloor = await this.repository.findBusSeats(busId)
+    const seatsOnSameFloor = seatsOnFloor.filter(
+      (seat) => seat.floor === floor,
+    )
+    let nextSeatNumber = 1
+    let startingRow = 1
+    if (seatsOnSameFloor.length > 0) {
+      const maxSeatNumber = Math.max(
+        ...seatsOnSameFloor.map((seat) => parseInt(seat.seatNumber)),
+      )
+      nextSeatNumber = maxSeatNumber + 1
+      const validRows = seatsOnSameFloor
+        .filter((seat) => seat.row !== null)
+        .map((seat) => seat.row as number)
+      if (validRows.length > 0) {
+        const maxRowOnFloor = Math.max(...validRows)
+        const seatsInLastRow = seatsOnSameFloor.filter(
+          (seat) => seat.row === maxRowOnFloor,
+        ).length
+        if (seatsInLastRow >= this.SEATS_PER_ROW) {
+          startingRow = maxRowOnFloor + 1
+        } else {
+          startingRow = maxRowOnFloor
+        }
+      }
+    }
+    const physicalSeats: Prisma.PhysicalSeatCreateManyInput[] = []
+    let currentRow = startingRow
+    let seatsInCurrentRow = 0
+    if (seatsOnSameFloor.length > 0) {
+      const seatsInCurrentRowOnFloor = seatsOnSameFloor.filter(
+        (seat) => seat.row === currentRow,
+      ).length
+      seatsInCurrentRow = seatsInCurrentRowOnFloor
+    }
+    for (let i = 0; i < quantity; i++) {
+      const column = (seatsInCurrentRow % this.SEATS_PER_ROW) + 1
+      const seatNumber = nextSeatNumber.toString()
+      const isVip = vipSeats?.includes(nextSeatNumber) ?? false
+      physicalSeats.push({
+        busId,
+        seatTypeId,
+        seatNumber,
+        row: currentRow,
+        column,
+        floor,
+        isTaken: false,
+        // isVip,
+      })
+      seatsInCurrentRow++
+      nextSeatNumber++
+      if (seatsInCurrentRow >= this.SEATS_PER_ROW) {
+        currentRow++
+        seatsInCurrentRow = 0
+      }
+    }
+    await this.repository.createManyPhysicalSeats(physicalSeats)
   }
 
   async getBusSeats(busId: number, companyId: number) {
@@ -249,35 +252,36 @@ export class BusCustomizationService {
     return bus
   }
 
-  async updateSeatType(busId: number, seatNumber: string, seatTypeId: number) {
-    // Verifica que el asiento exista
+  async updateSeatType(busId: number, seatNumber: string, seatTypeId: number, floor: number) {
+    // Verifica que el asiento exista en ese piso
     const seats = await this.repository.findBusSeats(busId)
-    const seat = seats.find(s => s.seatNumber === seatNumber)
+    const seat = seats.find(s => s.seatNumber === seatNumber && s.floor === floor)
     if (!seat) {
-      throw new NotFoundException(`El asiento número ${seatNumber} no existe en el bus ${busId}`)
+      throw new NotFoundException(`El asiento número ${seatNumber} en el piso ${floor} no existe en el bus ${busId}`)
     }
     // Verifica que el tipo de asiento exista
     const seatType = await this.repository.findSeatTypeById(seatTypeId)
     if (!seatType) {
       throw new NotFoundException(`Tipo de asiento con id ${seatTypeId} no encontrado`)
     }
-    await this.repository.updateSeatTypeByBusAndSeatNumber(busId, seatNumber, seatTypeId)
+    await this.repository.updateSeatTypeByBusAndSeatNumber(busId, seatNumber, seatTypeId, floor)
     return {
       success: true,
-      message: `Tipo de asiento actualizado correctamente para el asiento ${seatNumber} del bus ${busId}`,
+      message: `Tipo de asiento actualizado correctamente para el asiento ${seatNumber} del bus ${busId} en el piso ${floor}`,
       seatNumber,
       seatType: seatType.name,
+      floor,
     }
   }
 
-  async updateMultipleSeatTypes(busId: number, updates: { seatNumber: string, seatTypeId: number }[]) {
-    const results: Array<{ seatNumber: string; success: boolean; message: string; seatType?: string }> = []
+  async updateMultipleSeatTypes(busId: number, updates: UpdateSeatTypeDto[]) {
+    const results: Array<{ seatNumber: string; floor: number; success: boolean; message: string; seatType?: string }> = []
     for (const update of updates) {
       try {
-        const res = await this.updateSeatType(busId, update.seatNumber, update.seatTypeId)
-        results.push({ seatNumber: update.seatNumber, success: true, message: res.message, seatType: res.seatType })
+        const res = await this.updateSeatType(busId, update.seatNumber, update.seatTypeId, update.floor)
+        results.push({ seatNumber: update.seatNumber, floor: update.floor, success: true, message: res.message, seatType: res.seatType })
       } catch (error) {
-        results.push({ seatNumber: update.seatNumber, success: false, message: error.message })
+        results.push({ seatNumber: update.seatNumber, floor: update.floor, success: false, message: error.message })
       }
     }
     return {

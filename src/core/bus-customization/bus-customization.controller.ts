@@ -12,7 +12,7 @@ import { Auth } from 'src/core/auth/decorators/auth.decorator'
 import { USER_ROLE } from 'src/core/users/types/user-role.enum'
 import { BusCustomizationService } from './bus-customization.service'
 import { ApiStandardResponse } from 'src/common/decorators/api-standard-response.decorator'
-import { CreateBusCustomizationReqDto } from './dto/req/create-bus-customization.dto'
+import { CreateBusCustomizationReqDto, UpdateSeatTypeDto } from './dto/req/create-bus-customization.dto'
 import { GetCompanyId } from 'src/core/auth/decorators/get-company-id.decorator'
 import {
   BusCustomizationArrayResDto,
@@ -144,7 +144,7 @@ export class BusCustomizationController {
   @Post(':busId/update-seat-type')
   @ApiOperation({
     summary: 'Actualizar el tipo de asiento de uno o varios asientos de un bus',
-    description: 'Permite cambiar el tipo de asiento (por ejemplo, a VIP) de uno o varios asientos de un bus, usando el número de asiento y el busId. El seatTypeId 2 suele representar asientos VIP. Se puede enviar un array de objetos para actualizar varios asientos a la vez.'
+    description: 'Permite cambiar el tipo de asiento (por ejemplo, a VIP) de uno o varios asientos de un bus, usando el número de asiento, el busId y el piso. El seatTypeId 2 suele representar asientos VIP. Se puede enviar un array de objetos para actualizar varios asientos a la vez. El campo floor es obligatorio y debe ser consistente con la configuración del bus.'
   })
   @ApiParam({
     name: 'busId',
@@ -152,7 +152,7 @@ export class BusCustomizationController {
     type: Number,
   })
   @ApiBody({
-    description: 'Array de datos para actualizar el tipo de asiento. Cada objeto debe tener seatNumber y seatTypeId.',
+    description: 'Array de datos para actualizar el tipo de asiento. Cada objeto debe tener seatNumber, seatTypeId y floor.',
     schema: {
       type: 'array',
       items: {
@@ -160,30 +160,31 @@ export class BusCustomizationController {
         properties: {
           seatNumber: { type: 'string', example: '1', description: 'Número del asiento a actualizar' },
           seatTypeId: { type: 'number', example: 2, description: 'Nuevo ID del tipo de asiento (2 para VIP)' },
+          floor: { type: 'number', example: 1, description: 'Piso del asiento a actualizar' },
         },
-        required: ['seatNumber', 'seatTypeId']
+        required: ['seatNumber', 'seatTypeId', 'floor']
       }
     },
     examples: {
       varios: {
         summary: 'Actualizar varios asientos',
         value: [
-          { seatNumber: '1', seatTypeId: 2 },
-          { seatNumber: '2', seatTypeId: 2 },
-          { seatNumber: '3', seatTypeId: 1 }
+          { seatNumber: '1', seatTypeId: 2, floor: 1 },
+          { seatNumber: '2', seatTypeId: 2, floor: 2 },
+          { seatNumber: '3', seatTypeId: 1, floor: 1 }
         ]
       },
       uno: {
         summary: 'Actualizar un solo asiento',
         value: [
-          { seatNumber: '1', seatTypeId: 2 }
+          { seatNumber: '1', seatTypeId: 2, floor: 1 }
         ]
       }
     }
   })
   async updateSeatType(
     @Param('busId', ParseIntPipe) busId: number,
-    @Body() updates: { seatNumber: string, seatTypeId: number }[],
+    @Body() updates: UpdateSeatTypeDto[],
   ) {
     return this.service.updateMultipleSeatTypes(busId, updates)
   }

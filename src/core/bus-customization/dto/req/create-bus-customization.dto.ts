@@ -94,3 +94,9 @@ export class CreateBusCustomizationReqDto {
   @Max(2)
   floor: number
 }
+
+export interface UpdateSeatTypeDto {
+  seatNumber: string;
+  seatTypeId: number;
+  floor: number;
+}
