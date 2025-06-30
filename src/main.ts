@@ -54,6 +54,7 @@ async function bootstrap() {
     .setDescription('Complete API documentation for EcuaTickets...')
     .setVersion('1.0')
     .addServer(`http://localhost:${port}`, 'Local server')
+    .addServer('https://ecuatickets-api.onrender.com', 'Production server')
     .addBearerAuth({
       type: 'http',
       scheme: 'bearer',
