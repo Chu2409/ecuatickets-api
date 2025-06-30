@@ -134,9 +134,18 @@ export class RouteSheetsRepository {
         driverId: driverSearchRoutesDto.driverId,
       },
       include: {
-        bus: true,
+        bus: {
+          include: {
+            physicalSeats: true,
+          },
+        },
         driver: true,
-        frequency: true,
+        frequency: {
+          include: {
+            origin: true,
+            destination: true,
+          },
+        },
         tickets: {
           include: {
             origin: true,
