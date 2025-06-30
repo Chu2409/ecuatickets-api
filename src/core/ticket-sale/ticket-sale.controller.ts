@@ -37,7 +37,7 @@ export class TicketSaleController {
     private readonly counterSalesService: CounterSalesService,
     private readonly onlineSalesService: OnlineSalesService,
     private readonly prisma: DatabaseService,
-  ) {}
+  ) { }
 
   @Post('counter')
   @ApiOperation({
@@ -109,6 +109,26 @@ export class TicketSaleController {
     return { message: 'Pago validado exitosamente' }
   }
 
+  @Get('payments/pending-transfers')
+  @ApiOperation({
+    summary: 'Get pending transfer payments (CLERK)',
+  })
+  @ApiStandardResponse(Boolean)
+  @Auth(USER_ROLE.CUSTOMER, USER_ROLE.CLERK)
+  async getPendingTransferPayments() {
+    return this.counterSalesService.getPendingTransferPayments()
+  }
+
+  @Get('payments/my-pending-transfers')
+  @ApiOperation({
+    summary: 'Get my pending transfer payments (CUSTOMER)',
+  })
+  @ApiStandardResponse(Boolean)
+  @Auth(USER_ROLE.CUSTOMER)
+  async getMyPendingTransferPayments(@GetUser() user: User) {
+    return this.onlineSalesService.getPendingTransferPaymentsByUser(user.id)
+  }
+
   @Patch('payments/:paymentId/reject')
   @ApiOperation({
     summary: 'Reject pending payment (CLERK)',
@@ -124,16 +144,6 @@ export class TicketSaleController {
   ): Promise<{ message: string }> {
     await this.counterSalesService.rejectPayment(paymentId)
     return { message: 'Pago rechazado exitosamente' }
-  }
-
-  @Get('payments/pending-transfers')
-  @ApiOperation({
-    summary: 'Get pending transfer payments (CLERK)',
-  })
-  @ApiStandardResponse(Boolean)
-  @Auth(USER_ROLE.CUSTOMER, USER_ROLE.CLERK)
-  async getPendingTransferPayments() {
-    return this.counterSalesService.getPendingTransferPayments()
   }
 
   // @Get('customers/:customerId/tickets')

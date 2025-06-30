@@ -265,4 +265,40 @@ export class TicketSaleRepository {
       },
     })
   }
+
+  async findPendingTransferPaymentsByUserId(userId: number) {
+    return this.prisma.payment.findMany({
+      where: {
+        paymentMethod: 'TRANSFER',
+        status: 'PENDING',
+        userId: userId,
+      },
+      include: {
+        user: {
+          include: {
+            person: true,
+          },
+        },
+        tickets: {
+          include: {
+            passenger: true,
+            origin: true,
+            destination: true,
+            routeSheet: {
+              include: {
+                frequency: {
+                  include: {
+                    company: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+  }
 }
