@@ -9,7 +9,7 @@ export class SeatDto {
 
   @ApiProperty({
     description: 'Seat number',
-    example: '1',
+    example: '1A',
   })
   seatNumber: string
 
@@ -26,10 +26,22 @@ export class SeatDto {
   column: number
 
   @ApiProperty({
+    description: 'Floor number',
+    example: 1,
+  })
+  floor: number
+
+  @ApiProperty({
     description: 'Seat type name',
     example: 'Standard',
   })
   seatType: string
+
+  @ApiProperty({
+    description: 'Seat type value/price',
+    example: 25.50,
+  })
+  seatValue: number
 
   @ApiProperty({
     description: 'Whether the seat is taken',
@@ -62,11 +74,13 @@ export class BusSeatsResDto {
     example: {
       1: [
         {
-          seatNumber: '1',
+          id: 1,
+          seatNumber: '1A',
           row: 1,
           column: 1,
           floor: 1,
           seatType: 'Standard',
+          seatValue: 25.50,
           isTaken: false,
         },
       ],
