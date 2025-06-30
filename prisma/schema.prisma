@@ -44,6 +44,16 @@ enum UserRole {
   ADMIN
 }
 
+enum BusType {
+  CONVENCIONAL
+  EJECUTIVO
+  SEMI_CAMA
+  CAMA
+  DOBLE_PISO
+  DOBLE_PISO_EJECUTIVO
+  MICROBUS
+}
+
 model Person {
   id        Int      @id @default(autoincrement()) @map("id")
   name      String   @map("name")
@@ -173,6 +183,8 @@ model Bus {
   bodyBrand      String  @map("body_brand")
   photoUrl       String? @map("photo_url")
   isActive       Boolean @default(true) @map("is_active")
+
+  type           BusType @map("type")
 
   companyId Int     @map("company_id")
   company   Company @relation(fields: [companyId], references: [id])

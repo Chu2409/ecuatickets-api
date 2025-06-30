@@ -11,12 +11,13 @@ import {
   BusCustomizationResDto,
 } from './dto/res/bus-customization.dto'
 import { SeatDto } from './dto/res/bus-seats.dto'
+import { BUS_TYPES_CONFIG } from './bus-types.config'
 
 @Injectable()
 export class BusCustomizationService {
   private readonly SEATS_PER_ROW = 4
 
-  constructor(private repository: BusCustomizationRepository) {}
+  constructor(private repository: BusCustomizationRepository) { }
 
   async addSeatsToExistingBus(
     busId: number,
@@ -28,18 +29,27 @@ export class BusCustomizationService {
     const results: BusCustomizationResDto[] = []
 
     for (const singleConfig of configurations) {
-      const seatType = await this.repository.findSeatTypeById(
-        singleConfig.seatTypeId,
-      )
+      // Obtener configuración por defecto si no se pasan los parámetros
+      const typeConfig = BUS_TYPES_CONFIG.find(t => t.name === singleConfig.type)
+      if (!typeConfig) {
+        throw new BadRequestException(`Tipo de bus '${singleConfig.type}' no es válido.`)
+      }
+      const totalSeats = singleConfig.seats ?? singleConfig.quantity ?? typeConfig.seats
+      const floors = singleConfig.floors ?? typeConfig.floors
+      const quantity = singleConfig.quantity ?? totalSeats
+      const floor = singleConfig.floor ?? 1
+
+      const seatTypeId = singleConfig.seatTypeId ?? 1;
+      const seatType = await this.repository.findSeatTypeById(seatTypeId);
       if (!seatType) {
         throw new NotFoundException(
-          `Tipo de asiento con el id ${singleConfig.seatTypeId} no encontrado`,
-        )
+          `Tipo de asiento con el id ${seatTypeId} no encontrado`,
+        );
       }
 
       const seatsOnFloor = await this.repository.findBusSeats(busId)
       const seatsOnSameFloor = seatsOnFloor.filter(
-        (seat) => seat.floor === singleConfig.floor,
+        (seat) => seat.floor === floor,
       )
 
       let nextSeatNumber = 1
@@ -71,8 +81,8 @@ export class BusCustomizationService {
 
       await this.repository.createSeatConfiguration({
         busId,
-        seatTypeId: singleConfig.seatTypeId,
-        quantity: singleConfig.quantity,
+        seatTypeId,
+        quantity,
       })
 
       const physicalSeats: Prisma.PhysicalSeatCreateManyInput[] = []
@@ -86,17 +96,21 @@ export class BusCustomizationService {
         seatsInCurrentRow = seatsInCurrentRowOnFloor
       }
 
-      for (let i = 0; i < singleConfig.quantity; i++) {
+      for (let i = 0; i < quantity; i++) {
         const column = (seatsInCurrentRow % this.SEATS_PER_ROW) + 1
+        const seatNumber = nextSeatNumber.toString()
+        const isVip = singleConfig.vipSeats?.includes(nextSeatNumber) ?? false
 
         physicalSeats.push({
           busId,
-          seatTypeId: singleConfig.seatTypeId,
-          seatNumber: nextSeatNumber.toString(),
+          seatTypeId,
+          seatNumber,
           row: currentRow,
           column,
-          floor: singleConfig.floor,
+          floor,
           isTaken: false,
+          // Puedes agregar un campo isVip si tu modelo lo soporta
+          // isVip,
         })
 
         seatsInCurrentRow++
@@ -111,9 +125,9 @@ export class BusCustomizationService {
       await this.repository.createManyPhysicalSeats(physicalSeats)
 
       results.push({
-        seatsAdded: singleConfig.quantity,
+        seatsAdded: quantity,
         seatRange: `${physicalSeats[0].seatNumber} - ${physicalSeats[physicalSeats.length - 1].seatNumber}`,
-        floor: singleConfig.floor,
+        floor,
         seatType: seatType.name,
       })
     }
@@ -233,5 +247,44 @@ export class BusCustomizationService {
       )
     }
     return bus
+  }
+
+  async updateSeatType(busId: number, seatNumber: string, seatTypeId: number) {
+    // Verifica que el asiento exista
+    const seats = await this.repository.findBusSeats(busId)
+    const seat = seats.find(s => s.seatNumber === seatNumber)
+    if (!seat) {
+      throw new NotFoundException(`El asiento número ${seatNumber} no existe en el bus ${busId}`)
+    }
+    // Verifica que el tipo de asiento exista
+    const seatType = await this.repository.findSeatTypeById(seatTypeId)
+    if (!seatType) {
+      throw new NotFoundException(`Tipo de asiento con id ${seatTypeId} no encontrado`)
+    }
+    await this.repository.updateSeatTypeByBusAndSeatNumber(busId, seatNumber, seatTypeId)
+    return {
+      success: true,
+      message: `Tipo de asiento actualizado correctamente para el asiento ${seatNumber} del bus ${busId}`,
+      seatNumber,
+      seatType: seatType.name,
+    }
+  }
+
+  async updateMultipleSeatTypes(busId: number, updates: { seatNumber: string, seatTypeId: number }[]) {
+    const results: Array<{ seatNumber: string; success: boolean; message: string; seatType?: string }> = []
+    for (const update of updates) {
+      try {
+        const res = await this.updateSeatType(busId, update.seatNumber, update.seatTypeId)
+        results.push({ seatNumber: update.seatNumber, success: true, message: res.message, seatType: res.seatType })
+      } catch (error) {
+        results.push({ seatNumber: update.seatNumber, success: false, message: error.message })
+      }
+    }
+    return {
+      success: results.every(r => r.success),
+      results,
+      totalUpdated: results.filter(r => r.success).length,
+      totalRequested: updates.length
+    }
   }
 }

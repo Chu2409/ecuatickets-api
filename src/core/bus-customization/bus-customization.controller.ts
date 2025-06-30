@@ -7,7 +7,7 @@ import {
   ParseIntPipe,
   Post,
 } from '@nestjs/common'
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger'
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags, ApiParam, ApiQuery } from '@nestjs/swagger'
 import { Auth } from 'src/core/auth/decorators/auth.decorator'
 import { USER_ROLE } from 'src/core/users/types/user-role.enum'
 import { BusCustomizationService } from './bus-customization.service'
@@ -21,13 +21,14 @@ import {
 import { ClearSeatsResDto } from './dto/res/delete-bus-configuration.dto'
 import { BusSeatsResDto } from './dto/res/bus-seats.dto'
 import { BusConfigurationResDto } from './dto/res/bus-configuration.dto'
+import { BUS_TYPES_CONFIG } from './bus-types.config'
 
 @ApiTags('Bus Customization (COMPANY)')
 @Controller('bus-customization')
 @ApiBearerAuth()
 @Auth(USER_ROLE.COMPANY)
 export class BusCustomizationController {
-  constructor(private readonly service: BusCustomizationService) {}
+  constructor(private readonly service: BusCustomizationService) { }
 
   @Post(':busId/add-seats')
   @ApiOperation({
@@ -36,15 +37,19 @@ export class BusCustomizationController {
       'Adds seats to a bus maintaining consecutive numbering and row consistency. Always accepts array of configurations',
   })
   @ApiBody({
-    description: 'Array of seat configurations',
+    description: 'Array of seat configurations. Si solo se envía el campo "type", el backend usará la configuración por defecto de asientos y pisos para ese tipo. Si se envían los campos "seats", "floors" o "quantity", estos valores sobrescribirán la configuración por defecto.',
     type: [CreateBusCustomizationReqDto],
     examples: {
       single: {
         summary: 'Single configuration',
         value: [
           {
+            type: 'CONVENCIONAL',
+            seats: 46,
+            floors: 1,
+            vipSeats: [1, 2, 3],
             seatTypeId: 1,
-            quantity: 20,
+            quantity: 46,
             floor: 1,
           },
         ],
@@ -53,17 +58,33 @@ export class BusCustomizationController {
         summary: 'Multiple configurations',
         value: [
           {
+            type: 'DOBLE_PISO',
+            seats: 36,
+            floors: 2,
+            vipSeats: [1, 2, 3, 4],
             seatTypeId: 1,
             quantity: 20,
             floor: 1,
           },
           {
+            type: 'DOBLE_PISO',
+            seats: 36,
+            floors: 2,
+            vipSeats: [21, 22, 23, 24],
             seatTypeId: 2,
-            quantity: 10,
+            quantity: 16,
             floor: 2,
           },
         ],
       },
+      onlyType: {
+        summary: 'Solo tipo (usa configuración por defecto)',
+        value: [
+          {
+            type: 'EJECUTIVO'
+          }
+        ]
+      }
     },
   })
   @ApiStandardResponse(BusCustomizationArrayResDto)
@@ -113,5 +134,57 @@ export class BusCustomizationController {
     @GetCompanyId() companyId: number,
   ) {
     return this.service.clearBusSeats(busId, companyId)
+  }
+
+  @Get('bus-types')
+  getBusTypesConfig() {
+    return BUS_TYPES_CONFIG;
+  }
+
+  @Post(':busId/update-seat-type')
+  @ApiOperation({
+    summary: 'Actualizar el tipo de asiento de uno o varios asientos de un bus',
+    description: 'Permite cambiar el tipo de asiento (por ejemplo, a VIP) de uno o varios asientos de un bus, usando el número de asiento y el busId. El seatTypeId 2 suele representar asientos VIP. Se puede enviar un array de objetos para actualizar varios asientos a la vez.'
+  })
+  @ApiParam({
+    name: 'busId',
+    description: 'ID del bus',
+    type: Number,
+  })
+  @ApiBody({
+    description: 'Array de datos para actualizar el tipo de asiento. Cada objeto debe tener seatNumber y seatTypeId.',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          seatNumber: { type: 'string', example: '1', description: 'Número del asiento a actualizar' },
+          seatTypeId: { type: 'number', example: 2, description: 'Nuevo ID del tipo de asiento (2 para VIP)' },
+        },
+        required: ['seatNumber', 'seatTypeId']
+      }
+    },
+    examples: {
+      varios: {
+        summary: 'Actualizar varios asientos',
+        value: [
+          { seatNumber: '1', seatTypeId: 2 },
+          { seatNumber: '2', seatTypeId: 2 },
+          { seatNumber: '3', seatTypeId: 1 }
+        ]
+      },
+      uno: {
+        summary: 'Actualizar un solo asiento',
+        value: [
+          { seatNumber: '1', seatTypeId: 2 }
+        ]
+      }
+    }
+  })
+  async updateSeatType(
+    @Param('busId', ParseIntPipe) busId: number,
+    @Body() updates: { seatNumber: string, seatTypeId: number }[],
+  ) {
+    return this.service.updateMultipleSeatTypes(busId, updates)
   }
 }

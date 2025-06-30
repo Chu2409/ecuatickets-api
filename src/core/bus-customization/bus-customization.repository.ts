@@ -5,7 +5,7 @@ import { CreateBusCustomizationReqDto } from './dto/req/create-bus-customization
 
 @Injectable()
 export class BusCustomizationRepository {
-  constructor(private readonly dbService: DatabaseService) {}
+  constructor(private readonly dbService: DatabaseService) { }
 
   async findBusById(id: number) {
     return this.dbService.bus.findUnique({
@@ -101,6 +101,18 @@ export class BusCustomizationRepository {
       where: { busId },
       _max: {
         column: true,
+      },
+    })
+  }
+
+  async updateSeatTypeByBusAndSeatNumber(busId: number, seatNumber: string, seatTypeId: number) {
+    return this.dbService.physicalSeat.updateMany({
+      where: {
+        busId,
+        seatNumber,
+      },
+      data: {
+        seatTypeId,
       },
     })
   }
