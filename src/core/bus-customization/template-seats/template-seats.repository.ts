@@ -1,34 +1,34 @@
-import { Injectable } from '@nestjs/common';
-import { SeatTemplateFiltersDto } from './dto/req/seat-template-filters.dto';
-import { CreateSeatTemplateDto } from './dto/req/create-seat-template.dto';
-import { UpdateSeatTemplateDto } from './dto/req/update-seat-template.dto';
-import { DatabaseService } from 'src/global/database/database.service';
+import { Injectable } from '@nestjs/common'
+import { SeatTemplateFiltersDto } from './dto/req/seat-template-filters.dto'
+import { CreateSeatTemplateDto } from './dto/req/create-seat-template.dto'
+import { UpdateSeatTemplateDto } from './dto/req/update-seat-template.dto'
+import { DatabaseService } from 'src/global/database/database.service'
 
 @Injectable()
 export class TemplateSeatsRepository {
   constructor(private readonly db: DatabaseService) {}
 
   async findAll(filters?: SeatTemplateFiltersDto) {
-    const where: any = {};
+    const where: any = {}
 
     if (filters?.name) {
       where.name = {
         contains: filters.name,
         mode: 'insensitive',
-      };
+      }
     }
 
     if (filters?.isActive !== undefined) {
-      where.isActive = filters.isActive;
+      where.isActive = filters.isActive
     }
 
     if (filters?.minSeats || filters?.maxSeats) {
-      where.totalSeats = {};
+      where.totalSeats = {}
       if (filters.minSeats) {
-        where.totalSeats.gte = filters.minSeats;
+        where.totalSeats.gte = filters.minSeats
       }
       if (filters.maxSeats) {
-        where.totalSeats.lte = filters.maxSeats;
+        where.totalSeats.lte = filters.maxSeats
       }
     }
 
@@ -36,17 +36,13 @@ export class TemplateSeatsRepository {
       where,
       include: {
         templateSeats: {
-          orderBy: [
-            { floor: 'asc' },
-            { row: 'asc' },
-            { column: 'asc' },
-          ],
+          orderBy: [{ floor: 'asc' }, { row: 'asc' }, { column: 'asc' }],
         },
       },
       orderBy: {
         createdAt: 'desc',
       },
-    });
+    })
   }
 
   async findById(id: number) {
@@ -54,18 +50,14 @@ export class TemplateSeatsRepository {
       where: { id },
       include: {
         templateSeats: {
-          orderBy: [
-            { floor: 'asc' },
-            { row: 'asc' },
-            { column: 'asc' },
-          ],
+          orderBy: [{ floor: 'asc' }, { row: 'asc' }, { column: 'asc' }],
         },
       },
-    });
+    })
   }
 
   async create(createSeatTemplateDto: CreateSeatTemplateDto) {
-    const { templateSeats, ...templateData } = createSeatTemplateDto;
+    const { templateSeats, ...templateData } = createSeatTemplateDto
 
     return this.db.seatTemplate.create({
       data: {
@@ -76,18 +68,14 @@ export class TemplateSeatsRepository {
       },
       include: {
         templateSeats: {
-          orderBy: [
-            { floor: 'asc' },
-            { row: 'asc' },
-            { column: 'asc' },
-          ],
+          orderBy: [{ floor: 'asc' }, { row: 'asc' }, { column: 'asc' }],
         },
       },
-    });
+    })
   }
 
   async update(id: number, updateSeatTemplateDto: UpdateSeatTemplateDto) {
-    const { templateSeats, ...templateData } = updateSeatTemplateDto;
+    const { templateSeats, ...templateData } = updateSeatTemplateDto
 
     // Si se proporcionan nuevos asientos de plantilla, eliminar los existentes y crear los nuevos
     if (templateSeats) {
@@ -102,14 +90,10 @@ export class TemplateSeatsRepository {
         },
         include: {
           templateSeats: {
-            orderBy: [
-              { floor: 'asc' },
-              { row: 'asc' },
-              { column: 'asc' },
-            ],
+            orderBy: [{ floor: 'asc' }, { row: 'asc' }, { column: 'asc' }],
           },
         },
-      });
+      })
     }
 
     // Si no se proporcionan nuevos asientos, solo actualizar los datos de la plantilla
@@ -118,20 +102,16 @@ export class TemplateSeatsRepository {
       data: templateData,
       include: {
         templateSeats: {
-          orderBy: [
-            { floor: 'asc' },
-            { row: 'asc' },
-            { column: 'asc' },
-          ],
+          orderBy: [{ floor: 'asc' }, { row: 'asc' }, { column: 'asc' }],
         },
       },
-    });
+    })
   }
 
   async delete(id: number) {
     return this.db.seatTemplate.delete({
       where: { id },
-    });
+    })
   }
 
   async findActiveTemplates() {
@@ -139,16 +119,12 @@ export class TemplateSeatsRepository {
       where: { isActive: true },
       include: {
         templateSeats: {
-          orderBy: [
-            { floor: 'asc' },
-            { row: 'asc' },
-            { column: 'asc' },
-          ],
+          orderBy: [{ floor: 'asc' }, { row: 'asc' }, { column: 'asc' }],
         },
       },
       orderBy: {
         name: 'asc',
       },
-    });
+    })
   }
-} 
+}

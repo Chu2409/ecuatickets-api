@@ -200,18 +200,18 @@ model SeatType {
 }
 
 model SeatTemplate {
-  id          Int     @id @default(autoincrement()) @map("id")
-  name        String  @map("name") // ej: "Bus Estándar 40 Asientos", "Bus VIP 28 Asientos"
-  description String? @map("description")
-  totalSeats  Int     @map("total_seats")
-  rows        Int     @map("rows")
-  columns     Int     @map("columns")
-  floors      Int     @default(1) @map("floors")
-  isActive    Boolean @default(true) @map("is_active")
+  id          Int      @id @default(autoincrement()) @map("id")
+  name        String   @map("name") // ej: "Bus Estándar 40 Asientos", "Bus VIP 28 Asientos"
+  description String?  @map("description")
+  totalSeats  Int      @map("total_seats")
+  rows        Int      @map("rows")
+  columns     Int      @map("columns")
+  floors      Int      @default(1) @map("floors")
+  isActive    Boolean  @default(true) @map("is_active")
   createdAt   DateTime @default(now()) @map("created_at")
-  
+
   templateSeats TemplateSeat[]
-  
+
   @@map("seat_templates")
 }
 
@@ -222,10 +222,10 @@ model TemplateSeat {
   column     Int     @map("column")
   floor      Int     @default(1) @map("floor")
   isAisle    Boolean @default(false) @map("is_aisle") // si es pasillo (sin asiento)
-  
+
   templateId Int          @map("template_id")
   template   SeatTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  
+
   @@unique([templateId, seatNumber])
   @@map("template_seats")
 }
