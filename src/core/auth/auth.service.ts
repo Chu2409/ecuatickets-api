@@ -5,6 +5,8 @@ import { JwtPayload } from './types/jwt-payload.interface'
 import { DisplayableException } from 'src/common/exceptions/displayable.exception'
 import { comparePassword } from 'src/common/utils/encrypter'
 import { UsersService } from '../users/users.service'
+import { RegisterUserReqDto } from './dto/req/register-user.dto'
+import { USER_ROLE } from '../users/types/user-role.enum'
 
 @Injectable()
 export class AuthService {
@@ -32,6 +34,13 @@ export class AuthService {
       }),
       user: userFound,
     }
+  }
+
+  async register(dto: RegisterUserReqDto) {
+    return this.usersService.create({
+      ...dto,
+      role: USER_ROLE.CUSTOMER,
+    })
   }
 
   private verifyPassword(password: string, userPassword: string) {

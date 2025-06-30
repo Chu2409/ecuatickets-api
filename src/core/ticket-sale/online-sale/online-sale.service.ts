@@ -181,7 +181,6 @@ export class OnlineSalesService {
 
       const routeSheet = await this.ticketSaleRepository.findRouteSheet(
         frequency.id,
-        ticket.date,
       )
       if (!routeSheet) {
         throw new NotFoundException(
@@ -266,6 +265,20 @@ export class OnlineSalesService {
         totalPaid,
         new Date().toISOString(),
       )
+    }
+  }
+
+  public async getPendingTransferPaymentsByUser(userId: number) {
+    const payments =
+      await this.ticketSaleRepository.findPendingTransferPaymentsByUserId(
+        userId,
+      )
+
+    return {
+      success: true,
+      message: 'Pagos pendientes por transferencia obtenidos correctamente',
+      data: payments,
+      total: payments.length,
     }
   }
 }

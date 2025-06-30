@@ -16,6 +16,8 @@ import { FrequenciesModule } from './core/frequencies/frequencies.module'
 import { SeatTypesModule } from './core/bus-customization/seat-types/seat-types.module'
 import { BusCustomizationModule } from './core/bus-customization/bus-customization.module'
 import { FrequencySegmentsModule } from './core/frequency-segments/frequency-segments.module'
+import { TemplateSeatsModule } from './core/bus-customization/template-seats/template-seats.module'
+import { AppController } from './app.controller'
 
 @Module({
   imports: [
@@ -35,7 +37,9 @@ import { FrequencySegmentsModule } from './core/frequency-segments/frequency-seg
     SeatTypesModule,
     BusCustomizationModule,
     FrequencySegmentsModule,
+    TemplateSeatsModule,
   ],
   providers: [ResponseInterceptor],
+  controllers: [AppController],
 })
 export class AppModule {}

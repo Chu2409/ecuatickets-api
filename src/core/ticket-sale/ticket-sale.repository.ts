@@ -46,17 +46,10 @@ export class TicketSaleRepository {
     })
   }
 
-  async findRouteSheet(
-    frequencyId: number,
-    date: Date,
-  ): Promise<RouteSheet | null> {
+  async findRouteSheet(frequencyId: number): Promise<RouteSheet | null> {
     return this.prisma.routeSheet.findFirst({
       where: {
         frequencyId,
-        date: {
-          gte: new Date(date.setHours(0, 0, 0, 0)),
-          lt: new Date(date.setHours(23, 59, 59, 999)),
-        },
       },
     })
   }
@@ -227,6 +220,77 @@ export class TicketSaleRepository {
             person: true,
           },
         },
+      },
+    })
+  }
+
+  async findPendingTransferPayments() {
+    return this.prisma.payment.findMany({
+      where: {
+        paymentMethod: 'TRANSFER',
+        status: 'PENDING',
+      },
+      include: {
+        user: {
+          include: {
+            person: true,
+          },
+        },
+        tickets: {
+          include: {
+            passenger: true,
+            origin: true,
+            destination: true,
+            routeSheet: {
+              include: {
+                frequency: {
+                  include: {
+                    company: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+  }
+
+  async findPendingTransferPaymentsByUserId(userId: number) {
+    return this.prisma.payment.findMany({
+      where: {
+        paymentMethod: 'TRANSFER',
+        status: 'PENDING',
+        userId,
+      },
+      include: {
+        user: {
+          include: {
+            person: true,
+          },
+        },
+        tickets: {
+          include: {
+            passenger: true,
+            origin: true,
+            destination: true,
+            routeSheet: {
+              include: {
+                frequency: {
+                  include: {
+                    company: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     })
   }

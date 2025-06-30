@@ -1,5 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger'
-import { IsDate, IsEnum, IsNotEmpty, IsNumber } from 'class-validator'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import {
+  IsDate,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+} from 'class-validator'
 import { ROUTE_STATUS } from '../../types/route-status.enum'
 import { ROUTE_MODE } from '../../types/route-mode.enum'
 import { Type } from 'class-transformer'
@@ -30,13 +36,13 @@ export class CreateRouteSheetDto {
   @IsEnum(ROUTE_MODE)
   mode: ROUTE_MODE
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The frequency id',
     example: 1,
   })
-  @IsNotEmpty()
+  @IsOptional()
   @IsNumber()
-  frequencyId: number
+  frequencyId?: number
 
   @ApiProperty({
     description: 'The bus id',
@@ -45,4 +51,12 @@ export class CreateRouteSheetDto {
   @IsNotEmpty()
   @IsNumber()
   busId: number
+
+  @ApiProperty({
+    description: 'The driver id',
+    example: 1,
+  })
+  @IsNotEmpty()
+  @IsNumber()
+  driverId: number
 }

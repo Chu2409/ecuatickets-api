@@ -4,6 +4,7 @@ import { SearchRoutesDto } from './dto/req/search-routes.dto'
 import { ROUTE_STATUS } from './types/route-status.enum'
 import { CreateRouteSheetDto } from './dto/req/create-route-sheet'
 import { RouteSheetsFiltersReqDto } from './dto/req/route-sheets-filters.dto'
+import { DriverSearchRoutesDto } from './dto/req/driver-search-routes'
 
 @Injectable()
 export class RouteSheetsService {
@@ -62,5 +63,11 @@ export class RouteSheetsService {
       page: filters.page,
       pages: Math.ceil(total / filters.limit),
     }
+  }
+
+  async getDriverRouteSheets(driverSearchRoutesDto: DriverSearchRoutesDto) {
+    return await this.routeSheetsRepository.getDriverRouteSheets(
+      driverSearchRoutesDto,
+    )
   }
 }

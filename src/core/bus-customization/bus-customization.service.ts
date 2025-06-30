@@ -5,18 +5,23 @@ import {
 } from '@nestjs/common'
 import { BusCustomizationRepository } from './bus-customization.repository'
 import { CreateBusCustomizationReqDto } from './dto/req/create-bus-customization.dto'
+import { CreateBusConfigurationFromTemplateDto } from './dto/req/create-bus-configuration-from-template.dto'
 import { Prisma } from '@prisma/client'
 import {
   BusCustomizationArrayResDto,
   BusCustomizationResDto,
 } from './dto/res/bus-customization.dto'
 import { SeatDto } from './dto/res/bus-seats.dto'
+import { TemplateSeatsService } from './template-seats/template-seats.service'
 
 @Injectable()
 export class BusCustomizationService {
   private readonly SEATS_PER_ROW = 4
 
-  constructor(private repository: BusCustomizationRepository) {}
+  constructor(
+    private repository: BusCustomizationRepository,
+    private templateSeatsService: TemplateSeatsService,
+  ) {}
 
   async addSeatsToExistingBus(
     busId: number,
@@ -147,7 +152,9 @@ export class BusCustomizationService {
           seatNumber: seat.seatNumber,
           row: seat.row ?? 0,
           column: seat.column ?? 0,
+          floor: seat.floor ?? 1,
           seatType: seat.seatType.name,
+          seatValue: seat.seatType.valueToApply,
           isTaken: seat.isTaken,
         }
 
@@ -233,5 +240,106 @@ export class BusCustomizationService {
       )
     }
     return bus
+  }
+
+  async configureBusFromTemplate(
+    configurationDto: CreateBusConfigurationFromTemplateDto,
+    companyId: number,
+  ): Promise<BusCustomizationArrayResDto> {
+    // Verificar que el bus pertenece a la compañía
+    await this.findBusByIdAndCompany(configurationDto.busId, companyId)
+
+    // Obtener la plantilla
+    const template = await this.templateSeatsService.findById(configurationDto.templateId)
+    
+    // Limpiar asientos existentes del bus
+    await this.clearBusSeats(configurationDto.busId, companyId)
+
+    // Crear un mapa de números de asiento a tipo de asiento
+    const seatTypeMap = new Map<string, number>()
+    for (const config of configurationDto.seatTypeConfigurations) {
+      for (const seatNumber of config.seatNumbers) {
+        seatTypeMap.set(seatNumber, config.seatTypeId)
+      }
+    }
+
+    // Verificar que todos los asientos enviados existan en la plantilla
+    const templateSeatNumbers = template.templateSeats
+      .filter(seat => !seat.isAisle)
+      .map(seat => seat.seatNumber)
+    
+    const configuredSeatNumbers = Array.from(seatTypeMap.keys())
+    
+    const invalidSeats = configuredSeatNumbers.filter(
+      seatNumber => !templateSeatNumbers.includes(seatNumber)
+    )
+    
+    if (invalidSeats.length > 0) {
+      throw new BadRequestException(
+        `Los siguientes asientos no existen en la plantilla: ${invalidSeats.join(', ')}`
+      )
+    }
+
+    // Crear configuraciones de asientos
+    const seatTypeCounts = new Map<number, number>()
+    for (const config of configurationDto.seatTypeConfigurations) {
+      seatTypeCounts.set(config.seatTypeId, config.seatNumbers.length)
+    }
+
+    // Crear las configuraciones en la base de datos
+    for (const [seatTypeId, quantity] of seatTypeCounts) {
+      await this.repository.createSeatConfiguration({
+        busId: configurationDto.busId,
+        seatTypeId,
+        quantity,
+      })
+    }
+
+    // Crear los asientos físicos SOLO para los asientos configurados
+    const physicalSeats: Prisma.PhysicalSeatCreateManyInput[] = []
+    
+    for (const templateSeat of template.templateSeats) {
+      // Solo procesar asientos que NO son pasillos y que están en la configuración
+      if (!templateSeat.isAisle && seatTypeMap.has(templateSeat.seatNumber)) {
+        const seatTypeId = seatTypeMap.get(templateSeat.seatNumber)!
+        
+        physicalSeats.push({
+          busId: configurationDto.busId,
+          seatTypeId,
+          seatNumber: templateSeat.seatNumber,
+          row: templateSeat.row,
+          column: templateSeat.column,
+          floor: templateSeat.floor,
+          isTaken: false,
+        })
+      }
+    }
+
+    await this.repository.createManyPhysicalSeats(physicalSeats)
+
+    // Preparar respuesta
+    const results: BusCustomizationResDto[] = []
+    for (const [seatTypeId, quantity] of seatTypeCounts) {
+      const seatType = await this.repository.findSeatTypeById(seatTypeId)
+      if (!seatType) {
+        throw new NotFoundException(`Tipo de asiento con ID ${seatTypeId} no encontrado`)
+      }
+
+      const seatsOfType = physicalSeats.filter(seat => seat.seatTypeId === seatTypeId)
+      const seatNumbers = seatsOfType.map(seat => seat.seatNumber).sort()
+      
+      results.push({
+        seatsAdded: quantity,
+        seatRange: `${seatNumbers[0]} - ${seatNumbers[seatNumbers.length - 1]}`,
+        floor: template.floors,
+        seatType: seatType.name,
+      })
+    }
+
+    return {
+      results,
+      totalSeatsAdded: physicalSeats.length,
+      configurationsProcessed: results.length,
+    }
   }
 }

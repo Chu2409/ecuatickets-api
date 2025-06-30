@@ -4,8 +4,8 @@ import { SearchRoutesDto } from './dto/req/search-routes.dto'
 import { RouteSheet } from '@prisma/client'
 import { ROUTE_STATUS } from './types/route-status.enum'
 import { CreateRouteSheetDto } from './dto/req/create-route-sheet'
-import { FrequencyResDto } from '../frequencies/dto/res/frequency.dto'
 import { RouteSheetsFiltersReqDto } from './dto/req/route-sheets-filters.dto'
+import { DriverSearchRoutesDto } from './dto/req/driver-search-routes'
 
 @Injectable()
 export class RouteSheetsRepository {
@@ -66,6 +66,9 @@ export class RouteSheetsRepository {
       include: {
         seatType: true,
       },
+      orderBy: {
+        id: 'asc',
+      },
     })
   }
 
@@ -117,5 +120,41 @@ export class RouteSheetsRepository {
     ])
 
     return [entities, total]
+  }
+
+  async getDriverRouteSheets(driverSearchRoutesDto: DriverSearchRoutesDto) {
+    const { date } = driverSearchRoutesDto
+
+    return await this.dbService.routeSheet.findMany({
+      where: {
+        date: {
+          gte: new Date(date.setHours(0, 0, 0, 0)),
+          lt: new Date(date.setHours(23, 59, 59, 999)),
+        },
+        driverId: driverSearchRoutesDto.driverId,
+      },
+      include: {
+        bus: {
+          include: {
+            physicalSeats: true,
+          },
+        },
+        driver: true,
+        frequency: {
+          include: {
+            origin: true,
+            destination: true,
+          },
+        },
+        tickets: {
+          include: {
+            origin: true,
+            destination: true,
+            physicalSeat: true,
+            passenger: true,
+          },
+        },
+      },
+    })
   }
 }

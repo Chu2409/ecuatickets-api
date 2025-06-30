@@ -3,6 +3,7 @@ import { CustomConfigService } from 'src/global/config/config.service'
 import * as path from 'path'
 import * as fs from 'fs/promises'
 import { v4 as uuidv4 } from 'uuid'
+import { Express } from 'express'
 
 @Injectable()
 export class FileUploadService {

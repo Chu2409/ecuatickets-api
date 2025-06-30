@@ -95,6 +95,7 @@ export class CounterSalesService {
         await this.ticketSaleRepository.findFrequencySegmentPriceById(
           ticket.frecuencySegmentPriceId,
         )
+
       if (!frequencySegmentPrice) {
         throw new NotFoundException(
           `Segmento de frecuencia con ID ${ticket.frecuencySegmentPriceId} no encontrado`,
@@ -121,7 +122,6 @@ export class CounterSalesService {
 
       const routeSheet = await this.ticketSaleRepository.findRouteSheet(
         frequency.id,
-        ticket.date,
       )
       if (!routeSheet) {
         throw new NotFoundException(
@@ -270,6 +270,18 @@ export class CounterSalesService {
       success: true,
       message: 'Pago rechazado correctamente',
       payment,
+    }
+  }
+
+  public async getPendingTransferPayments() {
+    const payments =
+      await this.ticketSaleRepository.findPendingTransferPayments()
+
+    return {
+      success: true,
+      message: 'Pagos pendientes por transferencia obtenidos correctamente',
+      data: payments,
+      total: payments.length,
     }
   }
 }

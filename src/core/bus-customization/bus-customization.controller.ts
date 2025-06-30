@@ -13,6 +13,7 @@ import { USER_ROLE } from 'src/core/users/types/user-role.enum'
 import { BusCustomizationService } from './bus-customization.service'
 import { ApiStandardResponse } from 'src/common/decorators/api-standard-response.decorator'
 import { CreateBusCustomizationReqDto } from './dto/req/create-bus-customization.dto'
+import { CreateBusConfigurationFromTemplateDto } from './dto/req/create-bus-configuration-from-template.dto'
 import { GetCompanyId } from 'src/core/auth/decorators/get-company-id.decorator'
 import {
   BusCustomizationArrayResDto,
@@ -29,50 +30,87 @@ import { BusConfigurationResDto } from './dto/res/bus-configuration.dto'
 export class BusCustomizationController {
   constructor(private readonly service: BusCustomizationService) {}
 
-  @Post(':busId/add-seats')
+  // @Post(':busId/add-seats')
+  // @ApiOperation({
+  //   summary: 'Add seats to an existing bus',
+  //   description:
+  //     'Adds seats to a bus maintaining consecutive numbering and row consistency. Always accepts array of configurations',
+  // })
+  // @ApiBody({
+  //   description: 'Array of seat configurations',
+  //   type: [CreateBusCustomizationReqDto],
+  //   examples: {
+  //     single: {
+  //       summary: 'Single configuration',
+  //       value: [
+  //         {
+  //           seatTypeId: 1,
+  //           quantity: 20,
+  //           floor: 1,
+  //         },
+  //       ],
+  //     },
+  //     multiple: {
+  //       summary: 'Multiple configurations',
+  //       value: [
+  //         {
+  //           seatTypeId: 1,
+  //           quantity: 20,
+  //           floor: 1,
+  //         },
+  //         {
+  //           seatTypeId: 2,
+  //           quantity: 10,
+  //           floor: 2,
+  //         },
+  //       ],
+  //     },
+  //   },
+  // })
+  // @ApiStandardResponse(BusCustomizationArrayResDto)
+  // addSeatsToExistingBus(
+  //   @Param('busId', ParseIntPipe) busId: number,
+  //   @Body() dto: CreateBusCustomizationReqDto[],
+  //   @GetCompanyId() companyId: number,
+  // ) {
+  //   return this.service.addSeatsToExistingBus(busId, dto, companyId)
+  // }
+
+  @Post('configure-from-template')
   @ApiOperation({
-    summary: 'Add seats to an existing bus',
+    summary: 'Configure bus seats using a template',
     description:
-      'Adds seats to a bus maintaining consecutive numbering and row consistency. Always accepts array of configurations',
+      'Configures all seats of a bus using a predefined template and seat type assignments',
   })
   @ApiBody({
-    description: 'Array of seat configurations',
-    type: [CreateBusCustomizationReqDto],
+    description: 'Bus configuration from template',
+    type: CreateBusConfigurationFromTemplateDto,
     examples: {
-      single: {
-        summary: 'Single configuration',
-        value: [
-          {
-            seatTypeId: 1,
-            quantity: 20,
-            floor: 1,
-          },
-        ],
-      },
-      multiple: {
-        summary: 'Multiple configurations',
-        value: [
-          {
-            seatTypeId: 1,
-            quantity: 20,
-            floor: 1,
-          },
-          {
-            seatTypeId: 2,
-            quantity: 10,
-            floor: 2,
-          },
-        ],
+      example: {
+        summary: 'Example configuration',
+        value: {
+          templateId: 1,
+          busId: 1,
+          seatTypeConfigurations: [
+            {
+              seatTypeId: 1,
+              seatNumbers: ['1A', '1B', '2A', '2B', '3A', '3B'],
+            },
+            {
+              seatTypeId: 2,
+              seatNumbers: ['4A', '4B', '5A', '5B'],
+            },
+          ],
+        },
       },
     },
   })
   @ApiStandardResponse(BusCustomizationArrayResDto)
-  addSeatsToExistingBus(
-    @Param('busId', ParseIntPipe) busId: number,
-    @Body() dto: CreateBusCustomizationReqDto[],
+  configureBusFromTemplate(
+    @Body() dto: CreateBusConfigurationFromTemplateDto,
     @GetCompanyId() companyId: number,
   ) {
-    return this.service.addSeatsToExistingBus(busId, dto, companyId)
+    return this.service.configureBusFromTemplate(dto, companyId)
   }
 
   @Get(':busId/seats')

@@ -1,6 +1,5 @@
 import {
   IsBoolean,
-  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -8,11 +7,10 @@ import {
   ValidateNested,
 } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { USER_ROLE } from '../../types/user-role.enum'
 import { CreatePersonReqDto } from 'src/core/people/dto/req/create-person.dto'
 import { Type } from 'class-transformer'
 
-export class CreateUserReqDto {
+export class RegisterUserReqDto {
   @IsString({ message: 'username must be a string' })
   @IsNotEmpty({ message: 'username is required' })
   @ApiProperty({
@@ -29,15 +27,6 @@ export class CreateUserReqDto {
   })
   password: string
 
-  @IsEnum(USER_ROLE)
-  @IsNotEmpty({ message: 'type is required' })
-  @ApiProperty({
-    description: 'The type of the user',
-    enum: USER_ROLE,
-    example: USER_ROLE.COMPANY,
-  })
-  role: USER_ROLE
-
   @IsBoolean({ message: 'isActive must be a boolean' })
   @IsOptional()
   @ApiPropertyOptional({
@@ -47,7 +36,7 @@ export class CreateUserReqDto {
   isActive?: boolean
 
   @ValidateIf(() => false)
-  companyId?: number
+  companyId: number
 
   @ValidateNested()
   @Type(() => CreatePersonReqDto)
