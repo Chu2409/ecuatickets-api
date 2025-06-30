@@ -95,6 +95,7 @@ export class CounterSalesService {
         await this.ticketSaleRepository.findFrequencySegmentPriceById(
           ticket.frecuencySegmentPriceId,
         )
+
       if (!frequencySegmentPrice) {
         throw new NotFoundException(
           `Segmento de frecuencia con ID ${ticket.frecuencySegmentPriceId} no encontrado`,
@@ -121,7 +122,6 @@ export class CounterSalesService {
 
       const routeSheet = await this.ticketSaleRepository.findRouteSheet(
         frequency.id,
-        ticket.date,
       )
       if (!routeSheet) {
         throw new NotFoundException(

@@ -46,17 +46,10 @@ export class TicketSaleRepository {
     })
   }
 
-  async findRouteSheet(
-    frequencyId: number,
-    date: Date,
-  ): Promise<RouteSheet | null> {
+  async findRouteSheet(frequencyId: number): Promise<RouteSheet | null> {
     return this.prisma.routeSheet.findFirst({
       where: {
         frequencyId,
-        date: {
-          gte: new Date(date.setHours(0, 0, 0, 0)),
-          lt: new Date(date.setHours(23, 59, 59, 999)),
-        },
       },
     })
   }

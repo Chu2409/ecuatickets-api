@@ -22,7 +22,7 @@ export class OnlineSalesService {
     private readonly ticketSaleRepository: TicketSaleRepository,
     private readonly emailService: EmailService,
     private readonly paypalService: PayPalService,
-  ) { }
+  ) {}
 
   public async processOnlineSale(dto: CreateOnlineSaleDto) {
     const ticketsData = await this.prepareTicketsData(dto.tickets)
@@ -181,7 +181,6 @@ export class OnlineSalesService {
 
       const routeSheet = await this.ticketSaleRepository.findRouteSheet(
         frequency.id,
-        ticket.date,
       )
       if (!routeSheet) {
         throw new NotFoundException(
@@ -270,7 +269,10 @@ export class OnlineSalesService {
   }
 
   public async getPendingTransferPaymentsByUser(userId: number) {
-    const payments = await this.ticketSaleRepository.findPendingTransferPaymentsByUserId(userId)
+    const payments =
+      await this.ticketSaleRepository.findPendingTransferPaymentsByUserId(
+        userId,
+      )
 
     return {
       success: true,
